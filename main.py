@@ -3,6 +3,7 @@ from Functions import (getAdidasRunnersCommunity, getAdidasRunnersCommunityEvent
 from Models import (AdidasRunnersEvent)
 from dotenv import load_dotenv
 import asyncio
+import logging
 
 
 def salvar_atividades_em_txt(events: List[AdidasRunnersEvent], nome_arquivo: str = "atividades.txt"):
@@ -12,8 +13,17 @@ def salvar_atividades_em_txt(events: List[AdidasRunnersEvent], nome_arquivo: str
             f.write(linha)
 
 def main():
-    load_dotenv()
+    logging.basicConfig(
+    level=logging.DEBUG,
+    filename="application.log", 
+    filemode="a", 
+    format='[%(asctime)s] (%(levelname)s) - %(message)s',
+    datefmt='%d-%b-%y %H:%M:%S'
+    )
 
+    logging.info("Carregando Variaveis de ambiente")
+    load_dotenv()
+    
     arCommunityList = getAdidasRunnersCommunity()
     for arCommunity in arCommunityList:
         currentARCommunityEventsList = getAdidasRunnersCommunityEvents(arCommunity)
