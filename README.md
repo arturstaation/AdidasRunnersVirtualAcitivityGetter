@@ -67,6 +67,7 @@ adidas-runners-bot/
 │   ├── __init__.py
 │   ├── adidasCommunityModel.py
 │   └── adidasRunnersEventModel.py
+├── .gitignore
 ├── main.py
 ├── requirements.txt
 ├── .env
