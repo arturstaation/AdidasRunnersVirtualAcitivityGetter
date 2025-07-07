@@ -1,5 +1,5 @@
 from typing import List
-from .GetJsonFromUrl import getJsonFromUrl
+from ..Selenium.GetJsonFromUrl import getJsonFromUrl
 from Models import (AdidasCommunity, AdidasRunnersEvent)
 
 def getAdidasRunnersCommunityEvents(community : AdidasCommunity) -> List[AdidasRunnersEvent]:

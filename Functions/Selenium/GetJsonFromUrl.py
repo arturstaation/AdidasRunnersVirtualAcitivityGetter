@@ -1,8 +1,7 @@
 from .GetDriver import getDriver
 import json
-import time
 
-def getJsonFromUrl(url) -> json:
+def getJsonFromUrl(url : str) -> json:
     driver = getDriver()
     driver.get(url)
 

@@ -1,7 +1,7 @@
 import telegram
 import os
 
-async def sendTelegramMessages(message):
+async def sendTelegramMessages(message:str):
     token = os.getenv("TOKEN")
     chat_id = os.getenv("CHAT_ID")
 

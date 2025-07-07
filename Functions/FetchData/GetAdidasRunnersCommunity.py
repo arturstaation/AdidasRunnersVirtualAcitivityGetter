@@ -1,6 +1,6 @@
 from typing import List
 from Models import AdidasCommunity
-from .GetJsonFromUrl import getJsonFromUrl
+from ..Selenium.GetJsonFromUrl import getJsonFromUrl
 
 def getAdidasRunnersCommunity() -> List[AdidasCommunity]:
     url = "https://www.adidas.com.br/adidasrunners/ar-api/gw/default/gw-api/v2/connect/communities?limit=100&type=AdidasRunners"

@@ -56,22 +56,34 @@ O bot irá buscar eventos da comunidade Adidas Runners e enviar atualizações d
 
 ```text
 adidas-runners-bot/
-├── Functions/
-│   ├── __init__.py
-│   ├── GetAdidasRunnersCommunity.py
-│   ├── GetAdidasRunnersCommunityEvents.py
-│   ├── GetDriver.py
-│   ├── GetJsonFromUrl.py
-│   └── SendTelegramMessages.py
-├── Models/
-│   ├── __init__.py
-│   ├── adidasCommunityModel.py
-│   └── adidasRunnersEventModel.py
-├── .gitignore
-├── main.py
-├── requirements.txt
-├── .env
-└── README.md
+│
+├── main.py                         # Arquivo principal de execução do bot
+├── requirements.txt               # Dependências do projeto
+├── .env                           # Variáveis de ambiente (TOKEN e CHAT_ID)
+├── .gitignore                     # Arquivos e pastas ignorados pelo Git
+├── README.md                      # Documentação do projeto
+│
+├── Functions/                     # Funções organizadas por responsabilidade
+│   ├── __init__.py  
+│   ├── FetchData/                 # Coleta de dados da Adidas
+│   │   ├── GetAdidasRunnersCommunity.py
+│   │   └── GetAdidasRunnersCommunityEvents.py
+│   │
+│   ├── Selenium/                  # Funções relacionadas ao Selenium
+│   │   ├── GetDriver.py
+│   │   └── GetJsonFromUrl.py
+│   │
+│   ├── Telegram/                  # Funções relacionadas ao Telegram
+│   │   ├── GenerateMessage.py
+│   │   └── SendTelegramMessage.py
+│   │
+│   └── Utils/                     # Funções utilitárias diversas
+│       └── FormatDate.py
+│
+└── Models/                        # Modelos e estruturas de dados
+    ├── __init__.py
+    ├── adidasCommunityModel.py
+    └── adidasRunnersEventModel.py
 ```
 
 ---
