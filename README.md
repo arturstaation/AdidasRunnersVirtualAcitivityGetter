@@ -56,34 +56,25 @@ O bot irá buscar eventos da comunidade Adidas Runners e enviar atualizações d
 
 ```text
 adidas-runners-bot/
+├── Services/                          # Diretório principal dos serviços
+│   ├── __init__.py
+│   ├── AdidasService.py              # Lida com dados da Adidas (comunidades e eventos)
+│   ├── LoggerService.py             # Configuração do logging
+│   ├── SeleniumWebDriverService.py  # Web scraping via Selenium
+│   ├── TelegramService.py           # Envia mensagens, gera texto, etc
+│   └── UtilsService.py              # Funções auxiliares como formatação de data
 │
-├── main.py                         # Arquivo principal de execução do bot
-├── requirements.txt               # Dependências do projeto
-├── .env                           # Variáveis de ambiente (TOKEN e CHAT_ID)
-├── .gitignore                     # Arquivos e pastas ignorados pelo Git
-├── README.md                      # Documentação do projeto
+├── Models/                           # Classes de tipagem / entidades
+│   ├── __init__.py
+│   ├── adidasCommunityModel.py
+│   └── adidasRunnersEventModel.py
 │
-├── Functions/                     # Funções organizadas por responsabilidade
-│   ├── __init__.py  
-│   ├── FetchData/                 # Coleta de dados da Adidas
-│   │   ├── GetAdidasRunnersCommunity.py
-│   │   └── GetAdidasRunnersCommunityEvents.py
-│   │
-│   ├── Selenium/                  # Funções relacionadas ao Selenium
-│   │   ├── GetDriver.py
-│   │   └── GetJsonFromUrl.py
-│   │
-│   ├── Telegram/                  # Funções relacionadas ao Telegram
-│   │   ├── GenerateMessage.py
-│   │   └── SendTelegramMessage.py
-│   │
-│   └── Utils/                     # Funções utilitárias diversas
-│       └── FormatDate.py
-│
-└── Models/                        # Modelos e estruturas de dados
-    ├── __init__.py
-    ├── adidasCommunityModel.py
-    └── adidasRunnersEventModel.py
+├── main.py                           # Ponto de entrada da aplicação
+├── .env                              # Variáveis de ambiente
+├── application.log                   # Logs das execuções da aplicação
+├── .gitignore
+├── requirements.txt
+└── README.md
 ```
 
 ---
