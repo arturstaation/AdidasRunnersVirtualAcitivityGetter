@@ -7,4 +7,4 @@ async def sendTelegramMessages(message):
 
     bot = telegram.Bot(token)
     async with bot:
-        await bot.sendMessage(chat_id=chat_id, text=message)
+        await bot.sendMessage(chat_id=chat_id, text=message, parse_mode='HTML')
