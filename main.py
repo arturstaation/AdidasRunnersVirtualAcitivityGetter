@@ -1,5 +1,5 @@
 from typing import List
-from Functions import (getAdidasRunnersCommunity, getAdidasRunnersCommunityEvents, sendTelegramMessages, generateMessage)
+from Services import (AdidasService, TelegramService, LoggerService, SeleniumWebDriverService, UtilsService)
 from Models import (AdidasRunnersEvent)
 from dotenv import load_dotenv
 import asyncio
@@ -13,23 +13,26 @@ def salvar_atividades_em_txt(events: List[AdidasRunnersEvent], nome_arquivo: str
             f.write(linha)
 
 def main():
-    logging.basicConfig(
-    level=logging.DEBUG,
-    filename="application.log", 
-    filemode="a", 
-    format='[%(asctime)s] (%(levelname)s) - %(message)s',
-    datefmt='%d-%b-%y %H:%M:%S'
-    )
+   
+    LoggerService()
 
     logging.info("Carregando Variaveis de ambiente")
     load_dotenv()
-    
-    arCommunityList = getAdidasRunnersCommunity()
+
+    seleniumWebDriverService = SeleniumWebDriverService()
+    adidasService = AdidasService(seleniumWebDriverService)
+    utilsService = UtilsService()
+    telegramService = TelegramService(utilsService)
+
+    arCommunityList = adidasService.getAdidasRunnersCommunity()
     for arCommunity in arCommunityList:
-        currentARCommunityEventsList = getAdidasRunnersCommunityEvents(arCommunity)
+        currentARCommunityEventsList = adidasService.getAdidasRunnersCommunityEvents(arCommunity)
         salvar_atividades_em_txt(currentARCommunityEventsList)
-        asyncio.run(sendTelegramMessages(generateMessage(currentARCommunityEventsList, arCommunity)))
+        telegramMessage = telegramService.generateMessage(currentARCommunityEventsList, arCommunity)
+        asyncio.run(telegramService.sendTelegramMessages(telegramMessage))
         break
+
+    seleniumWebDriverService.stopDriver()
 
 if __name__ == '__main__':
     main()
