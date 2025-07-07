@@ -57,11 +57,16 @@ O bot irá buscar eventos da comunidade Adidas Runners e enviar atualizações d
 ```text
 adidas-runners-bot/
 ├── Functions/
+│   ├── __init__.py
 │   ├── GetAdidasRunnersCommunity.py
-│   └── GetAdidasRunnersCommunityEvents.py
+│   ├── GetAdidasRunnersCommunityEvents.py
+│   ├── GetDriver.py
+│   ├── GetJsonFromUrl.py
+│   └── SendTelegramMessages.py
 ├── Models/
-│   ├── AdidasCommunity.py
-│   └── AdidasRunnersEvent.py
+│   ├── __init__.py
+│   ├── adidasCommunityModel.py
+│   └── adidasRunnersEventModel.py
 ├── main.py
 ├── requirements.txt
 ├── .env

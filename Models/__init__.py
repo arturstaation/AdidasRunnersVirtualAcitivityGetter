@@ -1,5 +1,5 @@
 from .adidasCommunityModel import AdidasCommunity
-from .adidasRunnersEvent import AdidasRunnersEvent
+from .adidasRunnersEventModel import AdidasRunnersEvent
 
 
 __all__ = ['AdidasCommunity', 'AdidasRunnersEvent']
