@@ -32,5 +32,5 @@ class AdidasService:
         logging.info(f"Criando Lista de Eventos da Comunidade {community.name}")
         for event in data["_embedded"]["events"]:
             if not event.get("meta", {}).get("adidas_runners_locations"):
-                virtual_events.append(AdidasRunnersEvent(event["id"], event["title"], community.name, event["category"], event["eventStartDate"]))
+                virtual_events.append(AdidasRunnersEvent(event["id"], event["title"], event["category"], event["eventStartDate"]))
         return virtual_events

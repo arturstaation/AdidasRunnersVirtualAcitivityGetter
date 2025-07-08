@@ -2,3 +2,4 @@
 atividades.txt
 .env
 *.log
+./proxy_auth_plugin.zip

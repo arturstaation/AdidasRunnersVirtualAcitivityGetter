@@ -1,7 +1,8 @@
 import logging
+from typing import Self
 
 class LoggerService:
-    def __init__(self):
+    def __init__(self : Self):
         logging.basicConfig(
             level=logging.DEBUG,
             filename="application.log", 

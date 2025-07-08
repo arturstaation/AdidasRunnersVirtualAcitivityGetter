@@ -17,11 +17,11 @@ class TelegramService:
         self.chat_id = os.getenv("CHAT_ID")
 
         self.bot = telegram.Bot(self.token)
-        
-    def generateMessage(self: Self, events: List[AdidasRunnersEvent], community: AdidasCommunity) -> str:
+
+    def generateMessage(self: Self, arCommunity: AdidasCommunity) -> str:
         logging.info("Formatando Mesangem")
-        mensagem = f"<b>📢 Novas atividades do Adidas Runners:</b>\n\n<b>{community.name}</b>\n\n"
-        for event in events:
+        mensagem = f"<b>📢 Novas atividades do Adidas Runners:</b>\n\n<b>{arCommunity.name}</b>\n\n"
+        for event in arCommunity.events:
             mensagem += (
                 f"<b>• Nome:</b> {event.name}\n"
                 f"<b>• Categoria:</b> {event.category}\n"

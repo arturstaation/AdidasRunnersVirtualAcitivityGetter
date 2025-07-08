@@ -2,3 +2,4 @@ selenium==4.34.0
 python-dotenv==1.1.1
 python-telegram-bot==22.2
 asyncio==3.4.3
+requests==2.32.4

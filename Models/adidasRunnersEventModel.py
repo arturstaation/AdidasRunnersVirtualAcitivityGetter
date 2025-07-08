@@ -1,7 +1,13 @@
+from typing import Self
+
 class AdidasRunnersEvent:
-    def __init__(self, id:str, name:str, communityName:str, category:str, startDate:str):
+    id : str
+    name : str
+    category: str
+    startDate: str
+
+    def __init__(self: Self, id:str, name:str, category:str, startDate:str):
         self.id = id
-        self.name = "Adidas Runners " + name
-        self.community = communityName,
+        self.name = name
         self.category = category,
         self.startDate = startDate
