@@ -11,7 +11,7 @@ class TelegramService:
     utilsService : UtilsService
 
     def __init__(self: Self, utilsService: UtilsService):
-        self.utilsService = utilsService
+        self.utilsService = utilsService 
         
         self.token = os.getenv("TOKEN")
         self.chat_id = os.getenv("CHAT_ID")

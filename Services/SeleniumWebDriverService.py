@@ -1,15 +1,12 @@
 import logging
-import zipfile
-from selenium import webdriver
+from seleniumwire import webdriver
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 import json
 from selenium.common.exceptions import NoSuchElementException
 from typing import Self
 from .UtilsService import UtilsService
 from .ProxyService import ProxyService
-from Models import ProxyModel
-
-import time
 
 class SeleniumWebDriverService:
 
@@ -31,15 +28,19 @@ class SeleniumWebDriverService:
         proxyService.getProxies()
 
         logging.info("Gerando Plugin de Proxy")
-        manifest_json, background_js = self.getExtensionData(proxyService.getProxySettings())
-        pluginfile = 'proxy_auth_plugin.zip'
+        proxySettings = proxyService.getProxySettings()
 
-        with zipfile.ZipFile(pluginfile, 'w') as zp:
-            zp.writestr("manifest.json", manifest_json)
-            zp.writestr("background.js", background_js)
-        options.add_extension(pluginfile)
+        proxyUrl= f"http://{proxySettings.proxyUser}:{proxySettings.proxyPassword}@{proxySettings.proxyAddress}:{proxySettings.proxyPort}"
 
-        self.driver = webdriver.Chrome(options=options)
+        seleniumwireOptions = {
+            "proxy":{
+                "http": proxyUrl,
+                "https": proxyUrl
+            }
+        }
+
+        service = Service(executable_path="chromedriver.exe")
+        self.driver = webdriver.Chrome(service=service ,options=options, seleniumwire_options=seleniumwireOptions)
 
     def restartDriver(self: Self):
         logging.warning("Reiniciando WebDriver")
@@ -54,8 +55,6 @@ class SeleniumWebDriverService:
             try:
                 logging.info(f"[{tentativa}/{tentativas}] Acessando URL: {url}")
                 self.driver.get(url)
-                time.sleep(2)
-
                 try:
                     json_text = self.driver.find_element("tag name", "pre").text
                     return json.loads(json_text)
@@ -75,52 +74,3 @@ class SeleniumWebDriverService:
     def stopDriver(self: Self):
         logging.info("Finalizando Driver")
         self.driver.quit()
-
-    @staticmethod
-    def getExtensionData(proxyModel : ProxyModel):
-        return """
-        {
-            "version": "1.0.0",
-            "manifest_version": 2,
-            "name": "Chrome Proxy",
-            "permissions": [
-                "proxy",
-                "tabs",
-                "unlimitedStorage",
-                "storage",
-                "<all_urls>",
-                "webRequest",
-                "webRequestBlocking"
-            ],
-            "background": {
-                "scripts": ["background.js"]
-            },
-            "minimum_chrome_version":"22.0.0"
-        }
-        """, """
-        var config = {
-                mode: "fixed_servers",
-                rules: {
-                singleProxy: {
-                    scheme: "http",
-                    host: "%s",
-                    port: parseInt(%s)
-                },
-                bypassList: ["localhost"]
-                }
-            };
-        chrome.proxy.settings.set({value: config, scope: "regular"}, function() {});
-        function callbackFn(details) {
-            return {
-                authCredentials: {
-                    username: "%s",
-                    password: "%s"
-                }
-            };
-        }
-        chrome.webRequest.onAuthRequired.addListener(
-                    callbackFn,
-                    {urls: ["<all_urls>"]},
-                    ['blocking']
-        );
-        """ % (proxyModel.proxyAddress, proxyModel.proxyPort, proxyModel.proxyUser, proxyModel.proxyPassword)

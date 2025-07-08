@@ -14,10 +14,13 @@ class ProxyService:
     def __init__(self: Self):
         self.proxyUser = os.getenv("PROXY_USER")
         self.proxyPassword = os.getenv("PROXY_PASSWORD")
+        self.proxySettings = None
 
     def getProxies(self: Self, quantidade : int = 1):
         try:
             logging.info("Obtendo Proxy")
+            proxySettings = self.getProxySettings()
+            requests.get(f"https://{self.proxyUser}:{self.proxyPassword}@gw.dataimpulse.com:777/api/rotate_ip?port={proxySettings.proxyPort if proxySettings is not None else ''}")
             response = requests.get(f"https://{self.proxyUser}:{self.proxyPassword}@gw.dataimpulse.com:777/api/list?format=hostname:port:login:password&quantity={int(quantidade)}&type=sticky&protocol=http&countries=br")
             proxy_data = response.text.split('\n')
             for proxy_str in proxy_data:
@@ -38,4 +41,4 @@ class ProxyService:
             raise Exception("Erro ao obter dados do proxy")
         
     def getProxySettings(self: Self):
-        return self.proxySettings
+        return self.proxySettings if self.proxySettings is not None else None

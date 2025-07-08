@@ -1,10 +1,11 @@
+from typing import Self
 class ProxyModel:
     proxyAddress: str
-    proxyPort: int
+    proxyPort: str
     proxyUser: str
     proxyPassword: str
 
-    def __init__(self, pAddress, pPort, pUser, pPassword):
+    def __init__(self: Self, pAddress: str, pPort: str, pUser: str, pPassword: str):
         self.proxyAddress = pAddress
         self.proxyPort = pPort
         self.proxyUser = pUser

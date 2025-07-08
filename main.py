@@ -30,7 +30,6 @@ def main():
         salvar_atividades_em_txt(arCommunity)
         telegramMessage = telegramService.generateMessage(arCommunity)
         asyncio.run(telegramService.sendTelegramMessages(telegramMessage))
-        break
 
     seleniumWebDriverService.stopDriver()
 
