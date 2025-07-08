@@ -33,4 +33,7 @@ class AdidasService:
         for event in data["_embedded"]["events"]:
             if not event.get("meta", {}).get("adidas_runners_locations"):
                 virtual_events.append(AdidasRunnersEvent(event["id"], event["title"], event["category"], event["eventStartDate"]))
+
+        if(len(virtual_events) == 0):
+            logging.info(f"Nenhum Evento Virtual Foi encontrado para a comunidade {community.name}")
         return virtual_events

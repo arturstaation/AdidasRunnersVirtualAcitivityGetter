@@ -20,7 +20,10 @@ class ProxyService:
         try:
             logging.info("Obtendo Proxy")
             proxySettings = self.getProxySettings()
-            requests.get(f"https://{self.proxyUser}:{self.proxyPassword}@gw.dataimpulse.com:777/api/rotate_ip?port={proxySettings.proxyPort if proxySettings is not None else ''}")
+            
+            logging.info("Rotacionando IP do Proxy de Porta {proxySettings.proxyPort}")
+            requests.get(f"https://{self.proxyUser}:{self.proxyPassword}@gw.dataimpulse.com:777/api/rotate_ip?port={proxySettings.proxyPort if proxySettings is not None else '10000'}")
+            logging.info("Chamando a API para pegar obter o Proxy")
             response = requests.get(f"https://{self.proxyUser}:{self.proxyPassword}@gw.dataimpulse.com:777/api/list?format=hostname:port:login:password&quantity={int(quantidade)}&type=sticky&protocol=http&countries=br")
             proxy_data = response.text.split('\n')
             for proxy_str in proxy_data:

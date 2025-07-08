@@ -10,6 +10,11 @@ class LoggerService:
             format='[%(asctime)s] (%(levelname)s) - %(message)s',
             datefmt='%d-%b-%y %H:%M:%S'
         )
+        
+        logging.getLogger("seleniumwire").setLevel(logging.WARNING)
+
+        logging.getLogger("mitmproxy").setLevel(logging.WARNING)
+        logging.getLogger("hpack").setLevel(logging.WARNING)
 
         console = logging.StreamHandler()
         console.setLevel(logging.DEBUG)

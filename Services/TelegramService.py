@@ -18,19 +18,26 @@ class TelegramService:
 
         self.bot = telegram.Bot(self.token)
 
-    def generateMessage(self: Self, arCommunity: AdidasCommunity) -> str:
+    def generateMessage(self: Self, arCommunity: AdidasCommunity, messages: List[str]) -> str:
         logging.info("Formatando Mesangem")
-        mensagem = f"<b>📢 Novas atividades do Adidas Runners:</b>\n\n<b>{arCommunity.name}</b>\n\n"
+        message = f"<b>📢 Novas atividades do Adidas Runners:</b>\n\n<b>{arCommunity.name}</b>\n\n"
         for event in arCommunity.events:
-            mensagem += (
+            message += (
                 f"<b>• Nome:</b> {event.name}\n"
                 f"<b>• Categoria:</b> {event.category}\n"
-                f"<b>• Início:</b> {self.utilsService.formatDate(event.startDate)}\n\n"
+                f"<b>• Início:</b> {self.utilsService.formatDate(event.startDate)}\n"
+                f'<a href="https://www.adidas.com.br/adidasrunners/events/event/{event.id}">Ver evento</a>\n\n'
             )
-        return mensagem
+        if(len(messages) == 0):
+            messages.append(message)
+        elif(len(messages[len(messages)-1]) + len(message) > 4096):
+            messages.append(message)
+        return messages
     
-    async def sendTelegramMessages(self:Self, message:str):
+    async def sendTelegramMessages(self:Self, messages : List[str]):
         async with self.bot:
             
-            logging.info(f"Enviando Mesangem {message} Para o chat {self.chat_id}")
-            await self.bot.sendMessage(chat_id=self.chat_id, text=message, parse_mode='HTML')
+            for index, message in enumerate(messages): 
+                logging.info(f"Enviando Mensagem {index+1}/{len(messages)}")
+                logging.info(f"Enviando Mensagem {message} Para o chat {self.chat_id}")
+                await self.bot.sendMessage(chat_id=self.chat_id, text=message, parse_mode='HTML')

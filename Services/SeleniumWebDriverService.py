@@ -27,7 +27,7 @@ class SeleniumWebDriverService:
         proxyService = ProxyService()
         proxyService.getProxies()
 
-        logging.info("Gerando Plugin de Proxy")
+        logging.info("Gerando Proxy")
         proxySettings = proxyService.getProxySettings()
 
         proxyUrl= f"http://{proxySettings.proxyUser}:{proxySettings.proxyPassword}@{proxySettings.proxyAddress}:{proxySettings.proxyPort}"
@@ -45,7 +45,7 @@ class SeleniumWebDriverService:
     def restartDriver(self: Self):
         logging.warning("Reiniciando WebDriver")
         try:
-            self.driver.quit()
+            self.stopDriver()
         except:
             pass
         self.getDriver()

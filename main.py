@@ -3,13 +3,7 @@ from Models import (AdidasCommunity)
 from dotenv import load_dotenv
 import asyncio
 import logging
-
-
-def salvar_atividades_em_txt(arCommunity: AdidasCommunity, nome_arquivo: str = "atividades.txt"):
-    with open(nome_arquivo, "w", encoding="utf-8") as f:
-        for event in arCommunity.events:
-            linha = f"id: {event.id} | nome: {event.name} | comunidade: {arCommunity.name} |categoria: {event.category} | início: {event.startDate}\n"
-            f.write(linha)
+from typing import List
 
 def main():
    
@@ -24,13 +18,18 @@ def main():
     telegramService = TelegramService(utilsService)
 
     arCommunityList = adidasService.getAdidasRunnersCommunity()
+    messagesToSend : List[str] = []
+
     for arCommunity in arCommunityList:
         currentARCommunityEventsList = adidasService.getAdidasRunnersCommunityEvents(arCommunity)
         arCommunity.setEvents(currentARCommunityEventsList)
-        salvar_atividades_em_txt(arCommunity)
-        telegramMessage = telegramService.generateMessage(arCommunity)
-        asyncio.run(telegramService.sendTelegramMessages(telegramMessage))
+        if(len(currentARCommunityEventsList) > 0):
+            messagesToSend = telegramService.generateMessage(arCommunity, messagesToSend)
 
+    if(len(messagesToSend) > 0):
+        asyncio.run(telegramService.sendTelegramMessages(messagesToSend))
+    else:
+        logging.info("Nenhuma Mensagem para ser Enviada")
     seleniumWebDriverService.stopDriver()
 
 if __name__ == '__main__':
