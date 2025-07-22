@@ -1,5 +1,5 @@
-import logging
-from Models import (AdidasRunnersEvent, AdidasCommunity)
+from logging import Logger
+from Models import (AdidasCommunity)
 from typing import List, Self
 import telegram
 import os
@@ -9,17 +9,17 @@ from .UtilsService import UtilsService
 class TelegramService:
 
     utilsService : UtilsService
-
-    def __init__(self: Self, utilsService: UtilsService):
+    logger : Logger
+    def __init__(self: Self, logger : Logger, utilsService: UtilsService):
         self.utilsService = utilsService 
-        
+        self.logger = logger
         self.token = os.getenv("TOKEN")
         self.chat_id = os.getenv("CHAT_ID")
 
         self.bot = telegram.Bot(self.token)
 
     def generateMessage(self: Self, arCommunity: AdidasCommunity, messages: List[str]) -> str:
-        logging.info(f"Formatando Atividades da {arCommunity.name} em mensagem")
+        self.logger.info(f"Formatando Atividades da {arCommunity.name} em mensagem")
         if(len(messages) == 0):
             message = f"<b>📢 Novas atividades do Adidas Runners:</b>\n\n<b>{arCommunity.name}</b>\n\n"
         else:
@@ -32,13 +32,13 @@ class TelegramService:
                 f'<a href="https://www.adidas.com.br/adidasrunners/events/event/{event.id}">Ver evento</a>\n\n'
             )
         if(len(messages) == 0):
-            logging.info(f"Primeira mensagem da fila do processamento atual")
+            self.logger.info(f"Primeira mensagem da fila do processamento atual")
             messages.append(message)
         elif(len(messages[len(messages)-1]) + len(message) > 4096):
-            logging.info(f"Limite de caracteres da mensagem {len(message)+1} excedida, criando nova mensagem")
+            self.logger.info(f"Limite de caracteres da mensagem {len(message)+1} excedida, criando nova mensagem")
             messages.append(message)
         else:
-            logging.info(f"Limite de caracteres da mensagem {len(message)+1} não excedida, adicionando conteudo")
+            self.logger.info(f"Limite de caracteres da mensagem {len(message)+1} não excedida, adicionando conteudo")
             messages[-1] += message
         return messages
     
@@ -46,6 +46,6 @@ class TelegramService:
         async with self.bot:
             
             for index, message in enumerate(messages): 
-                logging.info(f"Enviando Mensagem {index+1}/{len(messages)}")
-                logging.info(f"Enviando Mensagem {message} Para o chat {self.chat_id}")
+                self.logger.info(f"Enviando Mensagem {index+1}/{len(messages)}")
+                self.logger.info(f"Enviando Mensagem {message} Para o chat {self.chat_id}")
                 await self.bot.sendMessage(chat_id=self.chat_id, text=message, parse_mode='HTML')

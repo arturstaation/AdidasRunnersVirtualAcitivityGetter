@@ -6,16 +6,18 @@ from typing import List
 
 def main():
    
-    LoggerService()
+    loggerService = LoggerService()
+    logger = loggerService.getLogger()
+    
 
     logging.info("Carregando Variaveis de ambiente")
     load_dotenv()
 
-    utilsService = UtilsService()
-    seleniumWebDriverService = SeleniumWebDriverService(utilsService)
-    adidasService = AdidasService(seleniumWebDriverService)
-    telegramService = TelegramService(utilsService)
-    googleSheetsService = GoogleSheetsService()
+    googleSheetsService = GoogleSheetsService(logger)
+    utilsService = UtilsService(logger)
+    seleniumWebDriverService = SeleniumWebDriverService(logger,utilsService)
+    adidasService = AdidasService(logger, seleniumWebDriverService)
+    telegramService = TelegramService(logger, utilsService)
 
 
 
@@ -32,8 +34,9 @@ def main():
     if(len(messagesToSend) > 0):
         asyncio.run(telegramService.sendTelegramMessages(messagesToSend))
     else:
-        logging.info("Nenhuma Mensagem para ser Enviada")
+        logger.info("Nenhuma Mensagem para ser Enviada")
     seleniumWebDriverService.stopDriver()
+    logger.info("Processamento Finalizado")
 
 if __name__ == '__main__':
     main()

@@ -1,4 +1,4 @@
-import logging
+from logging import Logger
 from seleniumwire import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
@@ -12,22 +12,24 @@ class SeleniumWebDriverService:
 
     driver : webdriver
     utilsService: UtilsService
+    logger : Logger
 
-    def __init__(self: Self, utilsService: UtilsService):
-        logging.info("Inicializando SeleniumWebDriver")
+    def __init__(self: Self, logger : Logger, utilsService: UtilsService):
+        self.logger = logger
+        self.logger.info("Inicializando SeleniumWebDriver")
         self.utilsService = utilsService
         self.getDriver()
 
     def getDriver(self: Self):
-        logging.info("Criando Selenium WebDriver")
+        self.logger.info("Criando Selenium WebDriver")
         options = Options()
         options.add_argument("--disable-gpu")
         options.add_argument("--no-sandbox")
         options.add_argument("--window-size=1920x1080")
-        proxyService = ProxyService()
+        proxyService = ProxyService(self.logger)
         proxyService.getProxies()
 
-        logging.info("Gerando Proxy")
+        self.logger.info("Gerando Proxy")
         proxySettings = proxyService.getProxySettings()
 
         proxyUrl= f"http://{proxySettings.proxyUser}:{proxySettings.proxyPassword}@{proxySettings.proxyAddress}:{proxySettings.proxyPort}"
@@ -43,7 +45,7 @@ class SeleniumWebDriverService:
         self.driver = webdriver.Chrome(service=service ,options=options, seleniumwire_options=seleniumwireOptions)
 
     def restartDriver(self: Self):
-        logging.warning("Reiniciando WebDriver")
+        self.logger.warning("Reiniciando WebDriver")
         try:
             self.stopDriver()
         except:
@@ -53,24 +55,24 @@ class SeleniumWebDriverService:
     def getJsonFromUrl(self, url: str, tentativas: int = 3) -> dict:
         for tentativa in range(1, tentativas + 1):
             try:
-                logging.info(f"[{tentativa}/{tentativas}] Acessando URL: {url}")
+                self.logger.info(f"[{tentativa}/{tentativas}] Acessando URL: {url}")
                 self.driver.get(url)
                 try:
                     json_text = self.driver.find_element("tag name", "pre").text
                     return json.loads(json_text)
                 except NoSuchElementException:
-                    logging.warning("Elemento <pre> não encontrado (provável erro 403)")
+                    self.logger.warning("Elemento <pre> não encontrado (provável erro 403)")
                     raise PermissionError("Erro 403 detectado")
 
             except PermissionError as e:
-                logging.warning(f"Erro 403 detectado. Reiniciando driver... Tentativa {tentativa}")
+                self.logger.warning(f"Erro 403 detectado. Reiniciando driver... Tentativa {tentativa}")
                 self.restartDriver()
             except Exception as e:
-                logging.error(f"Erro inesperado na tentativa {tentativa}: {e}")
+                self.logger.error(f"Erro inesperado na tentativa {tentativa}: {e}")
                 self.restartDriver()
 
         raise Exception(f"Falha ao obter JSON de {url} após {tentativas} tentativas")
     
     def stopDriver(self: Self):
-        logging.info("Finalizando Driver")
+        self.logger.info("Finalizando Driver")
         self.driver.quit()
