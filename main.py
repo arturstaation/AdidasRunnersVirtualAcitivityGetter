@@ -1,5 +1,4 @@
-from Services import (AdidasService, TelegramService, LoggerService, SeleniumWebDriverService, UtilsService)
-from Models import (AdidasCommunity)
+from Services import (AdidasService, TelegramService, LoggerService, SeleniumWebDriverService, UtilsService, GoogleSheetsService)
 from dotenv import load_dotenv
 import asyncio
 import logging
@@ -16,6 +15,9 @@ def main():
     seleniumWebDriverService = SeleniumWebDriverService(utilsService)
     adidasService = AdidasService(seleniumWebDriverService)
     telegramService = TelegramService(utilsService)
+    googleSheetsService = GoogleSheetsService()
+
+
 
     arCommunityList = adidasService.getAdidasRunnersCommunity()
     messagesToSend : List[str] = []
@@ -23,7 +25,8 @@ def main():
     for arCommunity in arCommunityList:
         currentARCommunityEventsList = adidasService.getAdidasRunnersCommunityEvents(arCommunity)
         arCommunity.setEvents(currentARCommunityEventsList)
-        if(len(currentARCommunityEventsList) > 0):
+        googleSheetsService.add_new_activities(arCommunity)
+        if(len(arCommunity.events) > 0):
             messagesToSend = telegramService.generateMessage(arCommunity, messagesToSend)
 
     if(len(messagesToSend) > 0):

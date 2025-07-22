@@ -19,8 +19,11 @@ class TelegramService:
         self.bot = telegram.Bot(self.token)
 
     def generateMessage(self: Self, arCommunity: AdidasCommunity, messages: List[str]) -> str:
-        logging.info("Formatando Mesangem")
-        message = f"<b>📢 Novas atividades do Adidas Runners:</b>\n\n<b>{arCommunity.name}</b>\n\n"
+        logging.info(f"Formatando Atividades da {arCommunity.name} em mensagem")
+        if(len(messages) == 0):
+            message = f"<b>📢 Novas atividades do Adidas Runners:</b>\n\n<b>{arCommunity.name}</b>\n\n"
+        else:
+            message = f"<b>{arCommunity.name}</b>\n\n"
         for event in arCommunity.events:
             message += (
                 f"<b>• Nome:</b> {event.name}\n"
@@ -29,9 +32,14 @@ class TelegramService:
                 f'<a href="https://www.adidas.com.br/adidasrunners/events/event/{event.id}">Ver evento</a>\n\n'
             )
         if(len(messages) == 0):
+            logging.info(f"Primeira mensagem da fila do processamento atual")
             messages.append(message)
         elif(len(messages[len(messages)-1]) + len(message) > 4096):
+            logging.info(f"Limite de caracteres da mensagem {len(message)+1} excedida, criando nova mensagem")
             messages.append(message)
+        else:
+            logging.info(f"Limite de caracteres da mensagem {len(message)+1} não excedida, adicionando conteudo")
+            messages[-1] += message
         return messages
     
     async def sendTelegramMessages(self:Self, messages : List[str]):
