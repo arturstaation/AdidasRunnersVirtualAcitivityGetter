@@ -35,14 +35,14 @@ adidas-runners-bot/
 
 ## ✅ Como Rodar o Projeto Localmente
 
-### 1. Clone o repositório
+### 1. 🔗 Clone o repositório
 
 ```bash
 git clone https://github.com/seu-usuario/adidas-runners-bot.git
 cd adidas-runners-bot
 ```
 
-### 2. Crie o arquivo `.env`
+### 2. 📄 Crie o arquivo `.env`
 
 Na raiz do projeto, crie um arquivo chamado `.env` com o seguinte conteúdo:
 
@@ -63,14 +63,14 @@ CHAT_ID=seu_chat_id_aqui
 📌 Para aprender a obter essas informações, siga este tutorial:  
 🎥 [Como criar um bot no Telegram e pegar o TOKEN/CHAT_ID](https://www.youtube.com/watch?v=uGaJVTPBpkM)
 
-### ⚙️ Instalar Dependências
+### 3. ⚙️ Instalar Dependências
 
 Instale os pacotes necessários com:
 
 ```bash
 pip install -r requirements.txt
 ```
-### 🚀 Executando o Bot
+### 4. 🚀 Executando o Bot
 
 ```bash
 python main.py
