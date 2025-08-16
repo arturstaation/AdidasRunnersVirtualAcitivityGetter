@@ -49,6 +49,11 @@ Na raiz do projeto, crie um arquivo chamado `.env` com o seguinte conteúdo:
 ```env
 TOKEN=seu_token_aqui
 CHAT_ID=seu_chat_id_aqui
+ADMIN_CHAT_ID=seu_admin_chat_id_aqui
+PROXY_USER=seu_proxy_user_aqui
+PROXY_PASSWORD=seu_proxy_password_aqui
+GOOGLE_CREDENTIALS=sua_google_credentials_aqui
+GOOGLE_SHEET_ID=sua_google_sheet_id
 ```
 
 - `TOKEN`: o token do seu bot do Telegram.  
