@@ -4,6 +4,7 @@ import socket
 from typing import Self
 from Models import ProxyModel
 from logging import Logger
+import traceback
 
 class ProxyService:
 
@@ -22,9 +23,10 @@ class ProxyService:
         try:
             self.logger.info("Obtendo Proxy")
             proxySettings = self.getProxySettings()
+            proxyPort = proxySettings.proxyPort if proxySettings is not None else '10000'
             
-            self.logger.info("Rotacionando IP do Proxy de Porta {proxySettings.proxyPort}")
-            requests.get(f"https://{self.proxyUser}:{self.proxyPassword}@gw.dataimpulse.com:777/api/rotate_ip?port={proxySettings.proxyPort if proxySettings is not None else '10000'}")
+            self.logger.info(f"Rotacionando IP do Proxy de Porta {proxyPort}")
+            requests.get(f"https://{self.proxyUser}:{self.proxyPassword}@gw.dataimpulse.com:777/api/rotate_ip?port={proxyPort}")
             self.logger.info("Chamando a API para pegar obter o Proxy")
             response = requests.get(f"https://{self.proxyUser}:{self.proxyPassword}@gw.dataimpulse.com:777/api/list?format=hostname:port:login:password&quantity={int(quantidade)}&type=sticky&protocol=http&countries=br")
             proxy_data = response.text.split('\n')
@@ -39,11 +41,12 @@ class ProxyService:
                         self.logger.info(f"Proxy obtido com sucesso")
                         return
                     except Exception as e:
-                        self.logger.warning(f"Erro ao resolver proxy {proxy_str}: {e}")
+                        stacktrace = traceback.format_exc()
+                        self.logger.error(f"Erro ao resolver proxy {proxy_str}: {e}. Stacktrace: {stacktrace}")
                 else:
                     self.logger.warning(f"Formato inválido de proxy: {proxy_str}")
         except Exception as e:
-            raise Exception("Erro ao obter dados do proxy")
+            raise Exception(f"Erro ao obter dados do proxy")
         
     def getProxySettings(self: Self):
         return self.proxySettings if self.proxySettings is not None else None

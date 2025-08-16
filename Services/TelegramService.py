@@ -3,8 +3,9 @@ from Models import (AdidasCommunity)
 from typing import List, Self
 import telegram
 import os
-import logging
+import html
 from .UtilsService import UtilsService
+from uuid import UUID
 
 class TelegramService:
 
@@ -14,8 +15,9 @@ class TelegramService:
         self.utilsService = utilsService 
         self.logger = logger
         self.token = os.getenv("TOKEN")
-        self.chat_id = os.getenv("CHAT_ID")
-
+        self.chatId = os.getenv("CHAT_ID")
+        self.adminChatId = os.getenv("ADMIN_CHAT_ID")
+        print(self.token)
         self.bot = telegram.Bot(self.token)
 
     def generateMessage(self: Self, arCommunity: AdidasCommunity, messages: List[str]) -> str:
@@ -47,5 +49,28 @@ class TelegramService:
             
             for index, message in enumerate(messages): 
                 self.logger.info(f"Enviando Mensagem {index+1}/{len(messages)}")
-                self.logger.info(f"Enviando Mensagem {message} Para o chat {self.chat_id}")
-                await self.bot.sendMessage(chat_id=self.chat_id, text=message, parse_mode='HTML')
+                self.logger.info(f"Enviando Mensagem {message} Para o chat {self.chatId}")
+                await self.bot.sendMessage(chat_id=self.chatId, text=message, parse_mode='HTML')
+    
+    async def sendTelegramAdminMessage(self:Self, message: str):
+        self.logger.info(f"Enviando Mensagem ao Administrador")
+        self.logger.info(f"Enviando Mensagem {message} Para o chat {self.adminChatId}")
+        await self.bot.sendMessage(chat_id=self.adminChatId, text=message, parse_mode='HTML')
+
+    def generateAdminErrorMessage(self: Self, processing_id: UUID, err: Exception, stacktrace: str) -> str:
+        self.logger.info("Formatando mensagem de erro para enviar ao administrador")
+        
+        pid = html.escape(str(processing_id))
+        err_text = html.escape(str(err)) if err is not None else ""
+        st_text = html.escape(stacktrace or "")
+        if len(err_text) > 800:
+            err_text = err_text[:800] + "\n...[truncated]"
+        if len(st_text) > 3500:
+            st_text = st_text[:3500] + "\n...[truncated]"
+
+        message = ""
+        message += f"<b>❌ Erro de processamento</b>\n\n"
+        message += f"<b>• Processing ID:</b> <code>{pid}</code>\n"
+        message += f"<b>• Erro:</b>\n<pre>{err_text}</pre>\n"
+        message += f"<b>• Stacktrace:</b>\n<pre>{st_text}</pre>"
+        return message

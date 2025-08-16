@@ -7,6 +7,7 @@ from selenium.common.exceptions import NoSuchElementException
 from typing import Self
 from .UtilsService import UtilsService
 from .ProxyService import ProxyService
+import traceback
 
 class SeleniumWebDriverService:
 
@@ -70,7 +71,8 @@ class SeleniumWebDriverService:
                 self.logger.warning(f"Erro 403 detectado. Reiniciando driver... Tentativa {tentativa}")
                 self.restartDriver()
             except Exception as e:
-                self.logger.error(f"Erro inesperado na tentativa {tentativa}: {e}")
+                stacktrace = traceback.format_exc()
+                self.logger.error(f"Erro inesperado na tentativa {tentativa}: {e}. Stacktrace: {stacktrace}")
                 self.restartDriver()
 
         raise Exception(f"Falha ao obter JSON de {url} após {tentativas} tentativas")
