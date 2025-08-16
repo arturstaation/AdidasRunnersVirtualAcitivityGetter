@@ -163,9 +163,10 @@ class GoogleSheetsService:
         existing_ids = {str(row[0]) for row in existing_rows[1:]}
         new_rows = []
         new_events = []
-
+        now = datetime.now(timezone.utc)
         for event in arCommunity.events:
-            if str(event.id) not in existing_ids:
+            start_time = datetime.strptime(event.startDate, '%Y-%m-%dT%H:%M:%S.%fZ').replace(tzinfo=timezone.utc)
+            if str(event.id) not in existing_ids and start_time > now:
                 new_rows.append([event.id, event.name, event.startDate, arCommunity.name])
                 new_events.append(event)
 

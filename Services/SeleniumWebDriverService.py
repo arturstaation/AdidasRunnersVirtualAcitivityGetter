@@ -44,7 +44,7 @@ class SeleniumWebDriverService:
             }
         }
 
-        service = Service(executable_path="chromedriver.exe")
+        service = Service(executable_path="chromedriver-linux64/chromedriver")
         self.driver = webdriver.Chrome(service=service ,options=options, seleniumwire_options=seleniumwireOptions)
 
     def restartDriver(self: Self):

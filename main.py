@@ -7,11 +7,11 @@ import traceback
 def main():
    loggerService = LoggerService()
    logger = loggerService.getLogger()
-   load_dotenv()
-   logger.info("Carregando Variaveis de ambiente")  
    utilsService = UtilsService(logger)
-   telegramService = TelegramService(logger, utilsService)
+   logger.info("Carregando Variaveis de ambiente")  
+   load_dotenv()
    try:
+        telegramService = TelegramService(logger, utilsService)
         googleSheetsService = GoogleSheetsService(logger)
         seleniumWebDriverService = SeleniumWebDriverService(logger,utilsService)
         adidasService = AdidasService(logger, seleniumWebDriverService)
@@ -27,14 +27,20 @@ def main():
             googleSheetsService.addNewActivities(arCommunity)
             if(len(arCommunity.events) > 0):
                 messagesToSend = telegramService.generateMessage(arCommunity, messagesToSend)
-
+        empty = False
         if(len(messagesToSend) > 0):
             asyncio.run(telegramService.sendTelegramMessages(messagesToSend))
         else:
+            empty = True
             logger.info("Nenhuma Mensagem para ser Enviada")
+
+        admMessage = telegramService.generateAdminSuccessMessage(loggerService.getProcessingId(), empty)
+        asyncio.run(telegramService.sendTelegramAdminMessage(admMessage))
+
         seleniumWebDriverService.stopDriver()
         logger.info("Processamento Finalizado")
    except Exception as e:
+    telegramService = TelegramService(logger, utilsService)
     stacktrace = traceback.format_exc()
     logger.error(f"Erro durante o processamento! Erro: {e}. Stacktrace: {stacktrace}")
     errorMessage = telegramService.generateAdminErrorMessage(loggerService.getProcessingId(), e, stacktrace)

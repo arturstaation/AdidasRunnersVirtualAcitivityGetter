@@ -57,10 +57,10 @@ class TelegramService:
         self.logger.info(f"Enviando Mensagem {message} Para o chat {self.adminChatId}")
         await self.bot.sendMessage(chat_id=self.adminChatId, text=message, parse_mode='HTML')
 
-    def generateAdminErrorMessage(self: Self, processing_id: UUID, err: Exception, stacktrace: str) -> str:
+    def generateAdminErrorMessage(self: Self, processingId: UUID, err: Exception, stacktrace: str) -> str:
         self.logger.info("Formatando mensagem de erro para enviar ao administrador")
         
-        pid = html.escape(str(processing_id))
+        pid = html.escape(str(processingId))
         err_text = html.escape(str(err)) if err is not None else ""
         st_text = html.escape(stacktrace or "")
         if len(err_text) > 800:
@@ -73,4 +73,16 @@ class TelegramService:
         message += f"<b>• Processing ID:</b> <code>{pid}</code>\n"
         message += f"<b>• Erro:</b>\n<pre>{err_text}</pre>\n"
         message += f"<b>• Stacktrace:</b>\n<pre>{st_text}</pre>"
+        return message
+    
+    def generateAdminSuccessMessage(self: Self, processingId: UUID, empty: bool) -> str:
+        self.logger.info("Formatando mensagem de processamento vazio")
+        
+        pid = html.escape(str(processingId))
+
+        message = ""
+        message += f"<b>✅ Processamento Finalizado com Sucesso</b>\n\n"
+        message += f"<b>• Processing ID:</b> <code>{pid}</code>\n"
+        if(empty):
+            message += f"<b> O Processamento não encontrou nenhuma nova atividade</b>\n"
         return message
