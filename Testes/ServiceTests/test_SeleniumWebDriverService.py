@@ -101,7 +101,7 @@ def test_getDriver_linux_builds_chrome_with_proxy(logger):
         svc = SeleniumWebDriverService(logger=logger, utilsService=MagicMock())
 
         m.service_cls.assert_called_once()
-        assert m.service_cls.call_args.kwargs.get("executable_path") == "../chromedriver-linux64/chromedriver"
+        assert m.service_cls.call_args.kwargs.get("executable_path") == "../chromedriver"
         m.proxy.getProxies.assert_called_once()
         _, kwargs = m.chrome_cls.call_args
         assert kwargs["seleniumwire_options"]["proxy"]["http"] == "http://user:pass@1.2.3.4:8080"
