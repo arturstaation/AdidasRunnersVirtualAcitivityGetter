@@ -8,6 +8,7 @@ from typing import Self
 from .UtilsService import UtilsService
 from .ProxyService import ProxyService
 import traceback
+import sys
 
 class SeleniumWebDriverService:
 
@@ -43,8 +44,11 @@ class SeleniumWebDriverService:
                 "https": proxyUrl
             }
         }
-
-        service = Service(executable_path="chromedriver-linux64/chromedriver")
+        
+        if sys.platform.startswith("win"):
+            service = Service(executable_path="../chromedriver.exe")
+        elif sys.platform.startswith("linux"):
+            service = Service(executable_path="../chromedriver-linux64/chromedriver")
         self.driver = webdriver.Chrome(service=service ,options=options, seleniumwire_options=seleniumwireOptions)
 
     def restartDriver(self: Self):

@@ -1,5 +1,6 @@
 **/__pycache__/**
-atividades.txt
 .env
 *.log
-./proxy_auth_plugin.zip
+**/coverage.xml
+**/.coverage
+

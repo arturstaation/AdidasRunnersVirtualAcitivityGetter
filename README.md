@@ -9,23 +9,42 @@ Este projeto tem como objetivo monitorar e **enviar atualizações sobre eventos
 
 ```text
 adidas-runners-bot/
-├── Services/                          # Diretório principal dos serviços
-│   ├── __init__.py
-│   ├── AdidasService.py              # Lida com dados da Adidas (comunidades e eventos)
-│   ├── GoogleSheetsService.py       # Lida com as planilhas, gerenciando eventos ativos e inativos
-│   ├── LoggerService.py             # Configuração do logging
-│   ├── SeleniumWebDriverService.py  # Web scraping via Selenium
-│   ├── TelegramService.py           # Envia mensagens, gera texto, etc
-│   └── UtilsService.py              # Funções auxiliares como formatação de data
+├── src/
+│   ├── Services/                          # Diretório principal dos serviços
+│   │   ├── __init__.py
+│   │   ├── AdidasService.py              # Lida com dados da Adidas (comunidades e eventos)
+│   │   ├── GoogleSheetsService.py       # Lida com as planilhas, gerenciando eventos ativos e inativos
+│   │   ├── LoggerService.py             # Configuração do logging
+│   │   ├── SeleniumWebDriverService.py  # Web scraping via Selenium
+│   │   ├── TelegramService.py           # Envia mensagens, gera texto, etc
+│   │   └── UtilsService.py              # Funções auxiliares como formatação de data
+│   │
+│   ├── Models/                           # Classes de tipagem / entidades
+│   │   ├── __init__.py
+│   │   ├── adidasCommunityModel.py
+│   │   └── adidasRunnersEventModel.py
+│   │
+│   └── main.py                           # Ponto de entrada da aplicação
 │
-├── Models/                           # Classes de tipagem / entidades
-│   ├── __init__.py
-│   ├── adidasCommunityModel.py
-│   └── adidasRunnersEventModel.py
+├── Testes/                                # Testes unitários espelhando a estrutura da src
+│   ├── Services/                          # Diretório principal dos serviços (testes)
+│   │   ├── __init__.py
+│   │   ├── test_AdidasService.py         # Testes para dados da Adidas (comunidades e eventos)
+│   │   ├── test_GoogleSheetsService.py   # Testes para planilhas, eventos ativos e inativos
+│   │   ├── test_LoggerService.py         # Testes da configuração do logging
+│   │   ├── test_SeleniumWebDriverService.py  # Testes de web scraping via Selenium
+│   │   ├── test_TelegramService.py       # Testes de envio de mensagens, geração de texto, etc
+│   │   └── test_UtilsService.py          # Testes das funções auxiliares como formatação de data
+│   │
+│   ├── Models/                           # Testes das classes de tipagem / entidades
+│   │   ├── __init__.py
+│   │   ├── test_adidasCommunityModel.py
+│   │   └── test_adidasRunnersEventModel.py
+│   │
+│   └── test_main.py                       # Testes do ponto de entrada da aplicação
 │
-├── main.py                           # Ponto de entrada da aplicação
-├── .env                              # Variáveis de ambiente
-├── application.log                   # Logs das execuções da aplicação
+├── .env                                   # Variáveis de ambiente
+├── application.log                        # Logs das execuções da aplicação
 ├── .gitignore
 ├── requirements.txt
 └── README.md
@@ -39,7 +58,7 @@ adidas-runners-bot/
 
 ```bash
 git clone https://github.com/seu-usuario/adidas-runners-bot.git
-cd adidas-runners-bot
+cd adidas-runners-bot/src
 ```
 
 ### 2. 📄 Crie o arquivo `.env`
@@ -81,3 +100,49 @@ pip install -r requirements.txt
 python main.py
 ```
 ---
+
+## Como rodar os testes unitários
+
+Antes de começar, garanta que as dependências de desenvolvimento estão instaladas (por exemplo, pytest e pytest-cov). Se estiver usando pip, você pode instalar com:
+```bash
+pip install -r requirements.txt
+```
+
+Defina a variável de ambiente PYTHONPATH apontando para a pasta src para que os imports funcionem corretamente.
+
+No PowerShell (Windows):
+```powershell
+$env:PYTHONPATH = "src/"
+```
+
+No Bash (Linux/macOS):
+```bash
+export PYTHONPATH="src/"
+```
+
+Para executar todos os testes:
+```bash
+pytest Testes
+```
+
+Para executar um teste específico (exemplo: arquivo ou teste pontual):
+```bash
+# Por arquivo
+pytest Testes/test_exemplo.py
+
+# Por nome de teste (substring do nome)
+pytest -k "nome_do_teste"
+```
+
+Para ver logs/saída de print durante os testes:
+```bash
+pytest -s
+```
+
+Para obter um relatório de cobertura:
+```bash
+pytest -q Testes --cov=src/ --cov-branch --cov-report=term-missing --cov-report=xml:src/coverage.xml
+```
+
+Isso irá calcular a cobertura de código do diretório src (incluindo verificação por branch), exibir no terminal as linhas não cobertas (term-missing), gerar um arquivo XML em src/coverage.xml (útil para CI).
+```
