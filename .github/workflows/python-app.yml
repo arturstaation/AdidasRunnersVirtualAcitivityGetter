@@ -38,10 +38,9 @@ jobs:
       with:
         name: coverage-report
         path: |
-          coverage.xml
-          htmlcov/
+          src/coverage.xml
     - name: Publish coverage summary
       run: |
-        coverage=$(grep 'line-rate' coverage.xml | sed -E 's/.*line-rate="([^"]+)".*/\1/')
+        coverage=$(grep 'line-rate' src/coverage.xml | sed -E 's/.*line-rate="([^"]+)".*/\1/')
         echo "## Coverage Report" >> $GITHUB_STEP_SUMMARY
         echo "Line coverage: $coverage" >> $GITHUB_STEP_SUMMARY
