@@ -44,3 +44,15 @@ jobs:
         coverage=$(grep 'line-rate' src/coverage.xml | sed -E 's/.*line-rate="([^"]+)".*/\1/')
         echo "## Coverage Report" >> $GITHUB_STEP_SUMMARY
         echo "Line coverage: $coverage" >> $GITHUB_STEP_SUMMARY
+  publish_images:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: build image
+        run: |
+          docker build -t arturstaation/adidasrunnersbot:latest
+      - name: push image to docker hub
+        run: |
+          docker login -u arturstaation -p ${{ secrets.DOCKER_HUB_TOKEN }}
+          docker push arturstaation/adidasrunnersbot:latest
