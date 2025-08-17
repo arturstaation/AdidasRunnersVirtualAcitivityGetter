@@ -53,9 +53,10 @@ class TelegramService:
                 await self.bot.sendMessage(chat_id=self.chatId, text=message, parse_mode='HTML')
     
     async def sendTelegramAdminMessage(self:Self, message: str):
-        self.logger.info(f"Enviando Mensagem ao Administrador")
-        self.logger.info(f"Enviando Mensagem {message} Para o chat {self.adminChatId}")
-        await self.bot.sendMessage(chat_id=self.adminChatId, text=message, parse_mode='HTML')
+        async with self.bot:
+            self.logger.info(f"Enviando Mensagem ao Administrador")
+            self.logger.info(f"Enviando Mensagem {message} Para o chat {self.adminChatId}")
+            await self.bot.sendMessage(chat_id=self.adminChatId, text=message, parse_mode='HTML')
 
     def generateAdminErrorMessage(self: Self, processingId: UUID, err: Exception, stacktrace: str) -> str:
         self.logger.info("Formatando mensagem de erro para enviar ao administrador")
