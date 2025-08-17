@@ -33,11 +33,15 @@ jobs:
         PYTHONPATH: src/
       run: |
         pytest -q Testes --cov=src/ --cov-branch --cov-report=term-missing --cov-report=xml:src/coverage.xml
-    - name: Upload coverage (Codecov)
-      env:
-        PYTHONPATH: src/
-      uses: codecov/codecov-action@v3
+    - name: Upload coverage report (artifact)
+      uses: actions/upload-artifact@v3
       with:
-        files: src/coverage.xml
-        flags: unittests
-        fail_ci_if_error: true
+        name: coverage-report
+        path: |
+          coverage.xml
+          htmlcov/
+    - name: Publish coverage summary
+      run: |
+        coverage=$(grep 'line-rate' coverage.xml | sed -E 's/.*line-rate="([^"]+)".*/\1/')
+        echo "## Coverage Report" >> $GITHUB_STEP_SUMMARY
+        echo "Line coverage: $coverage" >> $GITHUB_STEP_SUMMARY
