@@ -64,7 +64,9 @@ class LoggerService:
         logging.getLogger("httpcore").setLevel(logging.WARNING)
         logging.getLogger("h11").setLevel(logging.WARNING)
 
-        base_logger = logging.getLogger(__name__)
+        base_logger = logging.getLogger("Services.LoggerService")
+        base_logger.setLevel(logging.DEBUG)  
+        base_logger.addHandler(console)
         self.logger = self.ContextAdapter(base_logger, {'processingId': self.processingId})
         self.logger.info("Logger configurado")
         self.logger.info("Iniciando Processamento")
