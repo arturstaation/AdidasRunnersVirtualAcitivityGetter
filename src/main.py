@@ -5,18 +5,24 @@ from typing import List
 import traceback
 
 def main():
-   loggerService = LoggerService()
-   logger = loggerService.getLogger()
-   utilsService = UtilsService(logger)
-   logger.info("Carregando Variaveis de ambiente")  
-   load_dotenv()
+   telegramService = None
+   googleSheetsService = None
+   seleniumWebDriverService = None
+   adidasService = None
+   loggerService = None
+   logger = None
+   utilsService = None
+
    try:
+        loggerService = LoggerService()
+        logger = loggerService.getLogger()
+        logger.info("Carregando Variaveis de ambiente")  
+        load_dotenv()
+        utilsService = UtilsService(logger)
         telegramService = TelegramService(logger, utilsService)
         googleSheetsService = GoogleSheetsService(logger)
         seleniumWebDriverService = SeleniumWebDriverService(logger,utilsService)
         adidasService = AdidasService(logger, seleniumWebDriverService)
-
-
 
         arCommunityList = adidasService.getAdidasRunnersCommunity()
         messagesToSend : List[str] = []
