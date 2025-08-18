@@ -12,7 +12,7 @@ def main():
    loggerService = None
    logger = None
    utilsService = None
-
+   returnMessage = None
    try:
         loggerService = LoggerService()
         logger = loggerService.getLogger()
@@ -42,6 +42,10 @@ def main():
 
         admMessage = telegramService.generateAdminSuccessMessage(loggerService.getProcessingId(), empty)
         asyncio.run(telegramService.sendTelegramAdminMessage(admMessage))
+        message = {
+            "hasError": False,
+            "message": f"O processamento ocorreu com sucesso. {'Novos eventos foram encontrados' if not empty else 'Nenhum novo evento foi encontrado'}"
+        }
 
    except Exception as e:
     telegramService = TelegramService(logger, utilsService)
@@ -49,11 +53,19 @@ def main():
     logger.error(f"Erro durante o processamento! Erro: {e}. Stacktrace: {stacktrace}")
     errorMessage = telegramService.generateAdminErrorMessage(loggerService.getProcessingId(), e, stacktrace)
     asyncio.run(telegramService.sendTelegramAdminMessage(errorMessage))
+    message = {
+        "hasError": True,
+        "error": e,
+        "message": "Ocorreu um erro durante o processamento"
+    }
    finally:
         seleniumWebDriverService.stopDriver()
         logger.info("Processamento Finalizado")
+        return message
        
        
+def lambda_handler(event, context):
+    return main()
 
 if __name__ == '__main__':
     main()
