@@ -29,7 +29,8 @@ WORKDIR /app
 # Instala dependências Python
 COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip wheel && \
-pip install --no-cache-dir -r requirements.txt
+pip install --no-cache-dir -r requirements.txt && \
+pip install --no-cache-dir awslambdaric
 
 # Copia o projeto (inclui seu chromedriver da raiz)
 COPY . .
