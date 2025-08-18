@@ -37,7 +37,6 @@ def main():
         admMessage = telegramService.generateAdminSuccessMessage(loggerService.getProcessingId(), empty)
         asyncio.run(telegramService.sendTelegramAdminMessage(admMessage))
 
-        seleniumWebDriverService.stopDriver()
    except Exception as e:
     telegramService = TelegramService(logger, utilsService)
     stacktrace = traceback.format_exc()
@@ -45,6 +44,7 @@ def main():
     errorMessage = telegramService.generateAdminErrorMessage(loggerService.getProcessingId(), e, stacktrace)
     asyncio.run(telegramService.sendTelegramAdminMessage(errorMessage))
    finally:
+        seleniumWebDriverService.stopDriver()
         logger.info("Processamento Finalizado")
        
        
