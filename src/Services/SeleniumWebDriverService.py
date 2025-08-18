@@ -4,6 +4,9 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 import json
 from selenium.common.exceptions import NoSuchElementException
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.by import By
 from typing import Self
 from .UtilsService import UtilsService
 from .ProxyService import ProxyService
@@ -39,8 +42,6 @@ class SeleniumWebDriverService:
         os.makedirs(user_data_dir, exist_ok=True)
         os.makedirs(cache_dir, exist_ok=True)
 
-        options.add_argument(f"--user-data-dir={user_data_dir}")
-        options.add_argument(f"--disk-cache-dir={cache_dir}")
         proxyService = ProxyService(self.logger)
         proxyService.getProxies()
 
@@ -74,23 +75,29 @@ class SeleniumWebDriverService:
         for tentativa in range(1, tentativas + 1):
             try:
                 self.logger.info(f"[{tentativa}/{tentativas}] Acessando URL: {url}")
+                self.driver.set_page_load_timeout(30)  # limite para carregamento da página
                 self.driver.get(url)
+
                 try:
-                    json_text = self.driver.find_element("tag name", "pre").text
+                    pre_element = WebDriverWait(self.driver, 30).until(
+                        EC.presence_of_element_located((By.TAG_NAME, "pre"))
+                    )
+                    json_text = pre_element.text
                     return json.loads(json_text)
-                except NoSuchElementException:
+
+                except Exception:
                     self.logger.warning("Elemento <pre> não encontrado (provável erro 403)")
                     raise PermissionError("Erro 403 detectado")
 
-            except PermissionError as e:
+            except PermissionError:
                 self.logger.warning(f"Erro 403 detectado. Reiniciando driver... Tentativa {tentativa}")
                 self.restartDriver()
             except Exception as e:
                 stacktrace = traceback.format_exc()
                 self.logger.error(f"Erro inesperado na tentativa {tentativa}: {e}. Stacktrace: {stacktrace}")
-                self.restartDriver()
+            self.restartDriver()
 
-        raise Exception(f"Falha ao obter JSON de {url} após {tentativas} tentativas")
+            raise Exception(f"Falha ao obter JSON de {url} após {tentativas} tentativas")
     
     def stopDriver(self: Self):
         self.logger.info("Finalizando Driver")
