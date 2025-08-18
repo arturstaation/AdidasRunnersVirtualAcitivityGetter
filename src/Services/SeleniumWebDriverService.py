@@ -12,8 +12,7 @@ from .UtilsService import UtilsService
 from .ProxyService import ProxyService
 import traceback
 import sys
-import tempfile
-import uuid
+from tempfile import mkdtemp
 
 class SeleniumWebDriverService:
 
@@ -30,21 +29,17 @@ class SeleniumWebDriverService:
     def getDriver(self: Self):
         self.logger.info("Criando Selenium WebDriver")
         options = Options()
-        options.add_argument("--disable-gpu")
+        options.add_argument("--headless=new")
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-dev-shm-usage")
-        options.add_argument("--disable-software-rasterizer")
-        options.add_argument("--window-size=1920x1080")
-        options.add_argument("--headless=new")
+        options.add_argument("--disable-gpu")
+        options.add_argument("--disable-dev-tools")
+        options.add_argument("--no-zygote")
+        options.add_argument("--renderer-process-limit=1")   
+        options.add_argument("--process-per-site")
+        options.add_argument(f"--user-data-dir={mkdtemp()}")
+        options.add_argument(f"--disk-cache-dir={mkdtemp()}")
         options.add_argument("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36")
-        user_data_dir = f"/tmp/chrome_user_{uuid.uuid4()}"
-        cache_dir = f"/tmp/chrome_cache_{uuid.uuid4()}"
-        user_data_dir = tempfile.mkdtemp(prefix="chrome_user_")
-        cache_dir = tempfile.mkdtemp(prefix="chrome_cache_")
-
-
-        options.add_argument(f"--user-data-dir={user_data_dir}")
-        options.add_argument(f"--disk-cache-dir={cache_dir}")
 
         proxyService = ProxyService(self.logger)
         proxyService.getProxies()
