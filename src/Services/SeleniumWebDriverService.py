@@ -9,6 +9,8 @@ from .UtilsService import UtilsService
 from .ProxyService import ProxyService
 import traceback
 import sys
+import os
+import uuid
 
 class SeleniumWebDriverService:
 
@@ -27,9 +29,13 @@ class SeleniumWebDriverService:
         options = Options()
         options.add_argument("--disable-gpu")
         options.add_argument("--no-sandbox")
+        options.add_argument("--disable-dev-shm-usage")
         options.add_argument("--window-size=1920x1080")
         options.add_argument("--headless")
         options.add_argument("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36")
+        user_data_dir = f"/tmp/chrome_user_{uuid.uuid4()}"
+        os.makedirs(user_data_dir, exist_ok=True)
+        options.add_argument(f"--user-data-dir={user_data_dir}")
         proxyService = ProxyService(self.logger)
         proxyService.getProxies()
 
