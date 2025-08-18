@@ -95,9 +95,8 @@ class SeleniumWebDriverService:
             except Exception as e:
                 stacktrace = traceback.format_exc()
                 self.logger.error(f"Erro inesperado na tentativa {tentativa}: {e}. Stacktrace: {stacktrace}")
-            self.restartDriver()
-
-            raise Exception(f"Falha ao obter JSON de {url} após {tentativas} tentativas")
+                self.restartDriver()
+        raise Exception(f"Falha ao obter JSON de {url} após {tentativas} tentativas")
     
     def stopDriver(self: Self):
         self.logger.info("Finalizando Driver")
