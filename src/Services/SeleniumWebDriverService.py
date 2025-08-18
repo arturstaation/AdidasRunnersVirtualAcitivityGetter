@@ -42,6 +42,10 @@ class SeleniumWebDriverService:
         os.makedirs(user_data_dir, exist_ok=True)
         os.makedirs(cache_dir, exist_ok=True)
 
+
+        options.add_argument(f"--user-data-dir={user_data_dir}")
+        options.add_argument(f"--disk-cache-dir={cache_dir}")
+
         proxyService = ProxyService(self.logger)
         proxyService.getProxies()
 
