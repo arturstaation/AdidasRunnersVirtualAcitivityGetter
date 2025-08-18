@@ -12,7 +12,7 @@ from .UtilsService import UtilsService
 from .ProxyService import ProxyService
 import traceback
 import sys
-import os
+import tempfile
 import uuid
 
 class SeleniumWebDriverService:
@@ -39,8 +39,8 @@ class SeleniumWebDriverService:
         options.add_argument("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36")
         user_data_dir = f"/tmp/chrome_user_{uuid.uuid4()}"
         cache_dir = f"/tmp/chrome_cache_{uuid.uuid4()}"
-        os.makedirs(user_data_dir, exist_ok=True)
-        os.makedirs(cache_dir, exist_ok=True)
+        user_data_dir = tempfile.mkdtemp(prefix="chrome_user_")
+        cache_dir = tempfile.mkdtemp(prefix="chrome_cache_")
 
 
         options.add_argument(f"--user-data-dir={user_data_dir}")
