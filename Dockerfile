@@ -39,4 +39,5 @@ RUN chmod +x /app/chromedriver
 ENV CHROMEDRIVER=/app/chromedriver 
 
 WORKDIR /app/src
+ENTRYPOINT [ "python", "-m", "awslambdaric" ]
 CMD ["main.lambda_handler"]
