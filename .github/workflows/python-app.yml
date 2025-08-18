@@ -77,7 +77,7 @@ jobs:
       - name: Build & Push ECR
         run: |
           ECR_REGISTRY=${{ steps.ecr.outputs.registry }}
-          ECR_REPOSITORY=meu-lambda-app
+          ECR_REPOSITORY=adidasrunners
           IMAGE_TAG=latest
 
           docker build . -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
