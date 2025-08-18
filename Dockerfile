@@ -39,4 +39,4 @@ RUN chmod +x /app/chromedriver
 ENV CHROMEDRIVER=/app/chromedriver 
 
 WORKDIR /app/src
-CMD ["python", "main.py"]
+CMD ["main.lambda_handler"]
