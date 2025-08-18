@@ -3,6 +3,9 @@ from dotenv import load_dotenv
 import asyncio
 from typing import List
 import traceback
+import os
+import signal
+import psutil
 
 def main():
    telegramService = None
@@ -12,7 +15,6 @@ def main():
    loggerService = None
    logger = None
    utilsService = None
-   returnMessage = None
    try:
         loggerService = LoggerService()
         logger = loggerService.getLogger()
@@ -42,7 +44,7 @@ def main():
 
         admMessage = telegramService.generateAdminSuccessMessage(loggerService.getProcessingId(), empty)
         asyncio.run(telegramService.sendTelegramAdminMessage(admMessage))
-        message = {
+        return {
             "hasError": False,
             "message": f"O processamento ocorreu com sucesso. {'Novos eventos foram encontrados' if not empty else 'Nenhum novo evento foi encontrado'}"
         }
@@ -53,15 +55,36 @@ def main():
     logger.error(f"Erro durante o processamento! Erro: {e}. Stacktrace: {stacktrace}")
     errorMessage = telegramService.generateAdminErrorMessage(loggerService.getProcessingId(), e, stacktrace)
     asyncio.run(telegramService.sendTelegramAdminMessage(errorMessage))
-    message = {
+    return {
         "hasError": True,
-        "error": e,
+        "error": str(e),
         "message": "Ocorreu um erro durante o processamento"
     }
    finally:
         seleniumWebDriverService.stopDriver()
         logger.info("Processamento Finalizado")
-        return message
+        try:
+            try:
+                parent = psutil.Process(os.getpid())
+            except psutil.NoSuchProcess:
+                return
+            children = parent.children(recursive=True)
+            for process in children:
+                try:
+                    process.send_signal(signal.SIGTERM)
+                except Exception:
+                    pass
+        except Exception as e:
+            if logger:
+                logger.warning(f"Erro ao matar processos filhos: {e}")
+
+        try:
+            loop = asyncio.get_event_loop()
+            if not loop.is_closed():
+                loop.close()
+        except Exception:
+            pass
+
        
        
 def lambda_handler(event, context):
