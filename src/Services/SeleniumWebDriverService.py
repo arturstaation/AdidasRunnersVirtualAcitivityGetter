@@ -35,7 +35,7 @@ class SeleniumWebDriverService:
         options.add_argument("--disable-dev-shm-usage")
         options.add_argument("--disable-software-rasterizer")
         options.add_argument("--window-size=1920x1080")
-        options.add_argument("--headless")
+        options.add_argument("--headless=new")
         options.add_argument("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36")
         user_data_dir = f"/tmp/chrome_user_{uuid.uuid4()}"
         cache_dir = f"/tmp/chrome_cache_{uuid.uuid4()}"
