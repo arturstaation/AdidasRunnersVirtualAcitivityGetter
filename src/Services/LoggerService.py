@@ -36,22 +36,7 @@ class LoggerService:
         formatter = self.SafeFormatter('[%(processingId)s] - [%(asctime)s] (%(levelname)s) - %(message)s',
                           datefmt='%d-%b-%y %H:%M:%S', default_processing_id=self.processingId)
         console.setFormatter(formatter)
-
-        console.setFormatter(formatter)
         log_handlers.append(console)
-
-        if log_to_file:
-            file_handler = logging.FileHandler("/tmp/application.log", mode="a")
-            file_handler.setLevel(logging.DEBUG)
-            file_handler.setFormatter(formatter)
-            log_handlers.append(file_handler)
-
-        logging.basicConfig(
-            level=logging.DEBUG,
-            format='[%(asctime)s] (%(levelname)s) - %(message)s',
-            datefmt='%d-%b-%y %H:%M:%S',
-            handlers=log_handlers
-        )
 
         logging.getLogger("seleniumwire").setLevel(logging.WARNING)
         logging.getLogger("selenium.webdriver.remote.remote_connection").setLevel(logging.WARNING)
