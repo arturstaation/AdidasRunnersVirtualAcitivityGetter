@@ -5,6 +5,7 @@ from typing import List
 import traceback
 import os
 import signal
+import gc
 import psutil
 
 def main():
@@ -29,12 +30,17 @@ def main():
         arCommunityList = adidasService.getAdidasRunnersCommunity()
         messagesToSend : List[str] = []
 
-        for arCommunity in arCommunityList:
+        for i, arCommunity in enumerate(arCommunityList):
             currentARCommunityEventsList = adidasService.getAdidasRunnersCommunityEvents(arCommunity)
             arCommunity.setEvents(currentARCommunityEventsList)
             googleSheetsService.addNewActivities(arCommunity)
-            if(len(arCommunity.events) > 0):
+            if len(arCommunity.events) > 0:
                 messagesToSend = telegramService.generateMessage(arCommunity, messagesToSend)
+            arCommunity.setEvents([])
+            del arCommunity
+        gc.collect()
+
+
         empty = False
         if(len(messagesToSend) > 0):
             asyncio.run(telegramService.sendTelegramMessages(messagesToSend))

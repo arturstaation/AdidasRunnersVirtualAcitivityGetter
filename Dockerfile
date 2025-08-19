@@ -21,8 +21,7 @@ RUN curl -fsSL https://dl.google.com/linux/linux_signing_key.pub | gpg --dearmor
     rm -rf /var/lib/apt/lists/*
 
 # Paths úteis
-ENV CHROME_BIN=/usr/bin/google-chrome \
-    CHROMEDRIVER=/usr/local/bin/chromedriver
+ENV CHROME_BIN=/usr/bin/google-chrome 
       
 WORKDIR /app
 
@@ -33,7 +32,8 @@ pip install --no-cache-dir -r requirements.txt && \
 pip install --no-cache-dir awslambdaric
 
 # Copia o projeto (inclui seu chromedriver da raiz)
-COPY . .
+COPY src/ /app/src/
+COPY chromedriver .
 
 RUN chmod +x /app/chromedriver 
 

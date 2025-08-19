@@ -27,16 +27,11 @@ class LoggerService:
     def __init__(self : Self):
         self.processingId = str(uuid.uuid4())
 
-        log_to_file = os.environ.get("LOG_TO_FILE", "")
-
-        log_handlers = []
-
         console = logging.StreamHandler()
         console.setLevel(logging.DEBUG)
         formatter = self.SafeFormatter('[%(processingId)s] - [%(asctime)s] (%(levelname)s) - %(message)s',
                           datefmt='%d-%b-%y %H:%M:%S', default_processing_id=self.processingId)
         console.setFormatter(formatter)
-        log_handlers.append(console)
 
         logging.getLogger("seleniumwire").setLevel(logging.WARNING)
         logging.getLogger("selenium.webdriver.remote.remote_connection").setLevel(logging.WARNING)

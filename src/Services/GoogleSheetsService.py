@@ -146,6 +146,8 @@ class GoogleSheetsService:
                 
                 self.logger.info(f"Movendo {len(expired_rows)} Atividades expiradas para a planilha expired_activities")
                 all_ws.append_rows(expired_rows)
+            del valid_rows
+            del expired_rows
 
 
     def addNewActivities(self: Self, arCommunity: AdidasCommunity):
@@ -175,6 +177,6 @@ class GoogleSheetsService:
             self.logger.info(f"Adicionando Novas Atividades da Comunidade {arCommunity.name} ao GoogleSheets")
             self.logger.debug(f"Atividades: {new_rows}")
             live_ws.append_rows(new_rows, value_input_option='RAW')
-
+        del new_rows
         arCommunity.setEvents(new_events)
 
