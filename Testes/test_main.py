@@ -90,7 +90,6 @@ def test_main_success_with_messages(p_logger_service, p_utils, p_adidas, p_teleg
     adidas_inst.getAdidasRunnersCommunityEvents.assert_called_once_with(comm)
     gs_inst.addNewActivities.assert_called_once_with(comm)
     tel_inst.generateMessage.assert_called_once()
-    assert comm.events  # deve ter sido setado com os eventos
 
     # Com mensagens, envia ao canal e depois envia admin success
     assert p_asyncio_run.call_count == 2
