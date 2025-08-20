@@ -96,7 +96,7 @@ class SeleniumWebDriverService:
                 except Exception as e:
                     self.logger.warning(f"Erro desconhecido. Erro: {str(e)}")
                     lastError =  str(e)
-                    raise Exception("Erro Desconhecido")
+                    raise Exception(f"Erro Desconhecido: str{e}")
                 
             except Exception as e:
                 stacktrace = traceback.format_exc()
