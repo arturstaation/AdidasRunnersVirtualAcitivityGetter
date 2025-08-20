@@ -39,7 +39,7 @@ class SeleniumWebDriverService:
         options.add_argument("--process-per-site")
         options.add_argument(f"--user-data-dir={mkdtemp()}")
         options.add_argument(f"--disk-cache-dir={mkdtemp()}")
-        options.add_argument("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36")
+        options.add_argument("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36")
 
         proxyService = ProxyService(self.logger)
         proxyService.getProxies()
