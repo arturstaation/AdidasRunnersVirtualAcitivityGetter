@@ -25,7 +25,7 @@ def _make_proxy_settings():
 
 def _patch_driver_stack(win_or_linux="win"):
     """
-    Prepara patches de: Options, Service, webdriver.Chrome, ProxyService, sys.platform, NoSuchElementException.
+    Prepara patches de: Options, Service, webdriver.Chrome, ProxyService, sys.platform, TimeoutException.
     Retorna (patchers, mocks_ns) onde mocks_ns permite acesso por atributo (ponto).
     """
     options_mock_cls = MagicMock()
@@ -45,7 +45,7 @@ def _patch_driver_stack(win_or_linux="win"):
     proxy_service_cls.return_value = proxy_service_inst
     proxy_service_inst.getProxySettings.return_value = _make_proxy_settings()
 
-    class FakeNoSuchElementException(Exception):
+    class FakeTimeoutException(Exception):
         pass
 
     class FakeSys:
@@ -57,7 +57,7 @@ def _patch_driver_stack(win_or_linux="win"):
         patch("Services.SeleniumWebDriverService.webdriver.Chrome", chrome_mock_cls),
         patch("Services.SeleniumWebDriverService.ProxyService", proxy_service_cls),
         patch("Services.SeleniumWebDriverService.sys", FakeSys),
-        patch("Services.SeleniumWebDriverService.NoSuchElementException", FakeNoSuchElementException),
+        patch("Services.SeleniumWebDriverService.TimeoutException", FakeTimeoutException),
     ]
 
     mocks_ns = types.SimpleNamespace(
@@ -69,7 +69,7 @@ def _patch_driver_stack(win_or_linux="win"):
         driver=driver_mock,
         proxy_cls=proxy_service_cls,
         proxy=proxy_service_inst,
-        NoSuchElementException=FakeNoSuchElementException,
+        TimeoutException=FakeTimeoutException,
         sys=FakeSys,
     )
     return patchers, mocks_ns
@@ -129,7 +129,7 @@ def test_getJsonFromUrl_403_then_success(logger):
         svc = SeleniumWebDriverService(logger=logger, utilsService=MagicMock())
 
         m.driver.find_element.side_effect = [
-            m.NoSuchElementException("no <pre>"),
+            m.TimeoutException("no <pre>"),
             MagicMock(text=json.dumps({"try": 2})),
         ]
 
@@ -145,7 +145,7 @@ def test_getJsonFromUrl_all_403_raises(logger):
     with patchers[0], patchers[1], patchers[2], patchers[3], patchers[4], patchers[5]:
         svc = SeleniumWebDriverService(logger=logger, utilsService=MagicMock())
 
-        m.driver.find_element.side_effect = m.NoSuchElementException("again")
+        m.driver.find_element.side_effect = m.TimeoutException("again")
 
         with patch.object(SeleniumWebDriverService, "restartDriver") as p_restart:
             with pytest.raises(Exception) as exc:

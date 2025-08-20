@@ -3,7 +3,7 @@ from seleniumwire import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 import json
-from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
@@ -74,8 +74,12 @@ class SeleniumWebDriverService:
         for tentativa in range(1, tentativas + 1):
             try:
                 self.logger.info(f"[{tentativa}/{tentativas}] Acessando URL: {url}")
-                self.driver.set_page_load_timeout(30)  # limite para carregamento da página
-                self.driver.get(url)
+                try:
+                    self.driver.set_page_load_timeout(30) 
+                    self.driver.get(url)
+                except TimeoutException:
+                    self.logger.warning(f"A pagina {url} não carregou a tempo")
+                    raise TimeoutException("A pagina não carregou a tempo")
 
                 try:
                     pre_element = WebDriverWait(self.driver, 30).until(
@@ -83,17 +87,16 @@ class SeleniumWebDriverService:
                     )
                     json_text = pre_element.text
                     return json.loads(json_text)
-
-                except Exception:
+                except TimeoutException:
                     self.logger.warning("Elemento <pre> não encontrado (provável erro 403)")
                     raise PermissionError("Erro 403 detectado")
-
-            except PermissionError:
-                self.logger.warning(f"Erro 403 detectado. Reiniciando driver... Tentativa {tentativa}")
-                self.restartDriver()
+                except Exception as e:
+                    self.logger.warning(f"Erro desconhecido. Erro: {str(e)}")
+                    raise Exception("Erro Desconhecido")
+                
             except Exception as e:
                 stacktrace = traceback.format_exc()
-                self.logger.error(f"Erro inesperado na tentativa {tentativa}: {e}. Stacktrace: {stacktrace}")
+                self.logger.error(f"Erro na tentativa {tentativa}: {e}. Stacktrace: {stacktrace}")
                 self.restartDriver()
         raise Exception(f"Falha ao obter JSON de {url} após {tentativas} tentativas")
     
