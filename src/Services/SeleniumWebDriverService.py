@@ -57,9 +57,9 @@ class SeleniumWebDriverService:
         }
         
         if sys.platform.startswith("win"):
-            service = Service(executable_path=".../chromedriver.exe")
+            service = Service(executable_path="../chromedriver.exe")
         elif sys.platform.startswith("linux"):
-            service = Service(executable_path=".../chromedriver")
+            service = Service(executable_path="../chromedriver")
         self.driver = webdriver.Chrome(service=service ,options=options, seleniumwire_options=seleniumwireOptions)
 
     def restartDriver(self: Self):
