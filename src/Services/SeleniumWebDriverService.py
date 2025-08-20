@@ -71,14 +71,16 @@ class SeleniumWebDriverService:
         self.getDriver()
     
     def getJsonFromUrl(self, url: str, tentativas: int = 3) -> dict:
+        lastError = None
         for tentativa in range(1, tentativas + 1):
             try:
                 self.logger.info(f"[{tentativa}/{tentativas}] Acessando URL: {url}")
                 try:
                     self.driver.set_page_load_timeout(30) 
                     self.driver.get(url)
-                except TimeoutException:
+                except TimeoutException as e:
                     self.logger.warning(f"A pagina {url} não carregou a tempo")
+                    lastError =  str(e)
                     raise TimeoutException("A pagina não carregou a tempo")
 
                 try:
@@ -87,18 +89,21 @@ class SeleniumWebDriverService:
                     )
                     json_text = pre_element.text
                     return json.loads(json_text)
-                except TimeoutException:
+                except TimeoutException as e:
                     self.logger.warning("Elemento <pre> não encontrado (provável erro 403)")
+                    lastError =  str(e)
                     raise PermissionError("Erro 403 detectado")
                 except Exception as e:
                     self.logger.warning(f"Erro desconhecido. Erro: {str(e)}")
+                    lastError =  str(e)
                     raise Exception("Erro Desconhecido")
                 
             except Exception as e:
                 stacktrace = traceback.format_exc()
+                lastError =  str(e)
                 self.logger.error(f"Erro na tentativa {tentativa}: {e}. Stacktrace: {stacktrace}")
                 self.restartDriver()
-        raise Exception(f"Falha ao obter JSON de {url} após {tentativas} tentativas")
+        raise Exception(f"Falha ao obter JSON de {url} após {tentativas} tentativas. Erro: {lastError}")
     
     def stopDriver(self: Self):
         self.logger.info("Finalizando Driver")
