@@ -100,6 +100,30 @@ jobs:
     needs: [build, publish_images, deploy_aws]
     if: always()
     steps:
+      - name: Compose subject and body
+        id: compose
+        run: |
+          OVERALL="success"
+          if [ "${{ needs.build.result }}" != "success" ] || \
+            [ "${{ needs.publish_images.result }}" != "success" ] || \
+            [ "${{ needs.deploy_aws.result }}" != "success" ]; then
+            OVERALL="failure"
+          fi
+          echo "subject=CI/CD - adidasrunnersbot: ${OVERALL} (run #${{ github.run_number }})" >> $GITHUB_OUTPUT
+          cat > body.txt <<'EOF'
+          Repositório: ${{ github.repository }}
+          Workflow: ${{ github.workflow }}
+
+          Status por job:
+          - build: ${{ needs.build.result }}
+          - publish_images: ${{ needs.publish_images.result }}
+          - deploy_aws: ${{ needs.deploy_aws.result }}
+
+          Branch: ${{ github.ref_name }}
+          Commit: ${{ github.sha }}
+          Autor: ${{ github.actor }}
+          Run URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }} 
+          EOF
       - name: Send Email
         uses: dawidd6/action-send-mail@v3
         with:
@@ -110,18 +134,5 @@ jobs:
           from: ${{ secrets.EMAIL_FROM }}
           to: ${{ secrets.EMAIL_TO }}
           secure: true
-          subject: "CI/CD - adidasrunnersbot: ${{ job.status }} (run #${{ github.run_number }})"
-          body: |
-            Repositório: ${{ github.repository }}
-            Workflow: ${{ github.workflow }}
-            Job: ${{ github.job }}
-
-            Status por job:
-            - build: ${{ needs.build.result }}
-            - publish_images: ${{ needs.publish_images.result }}
-            - deploy_aws: ${{ needs.deploy_aws.result }}
-
-            Branch: ${{ github.ref_name }}
-            Commit: ${{ github.sha }}
-            Autor: ${{ github.actor }}
-            Run URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          subject: ${{ steps.compose.outputs.subject }}
+          body: ${{ steps.compose.outputs.body || fromJson('null') }}
