@@ -112,7 +112,6 @@ jobs:
 
           echo "subject=CI/CD - adidasrunnersbot: ${OVERALL} (run #${{ github.run_number }})" >> $GITHUB_OUTPUT
 
-          # Monta o corpo sem indentação extra (evita espaços no começo das linhas)
           {
             echo "Repositório: ${{ github.repository }}"
             echo "Workflow: ${{ github.workflow }}"
@@ -128,7 +127,7 @@ jobs:
             echo "Run URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           } > body.txt
 
-          # Define a saída 'body' lendo o arquivo (escapando quebras de linha corretamente)
+          # Escapa corretamente para output do GitHub (preserva quebras de linha)
           BODY_CONTENT="$(cat body.txt)"
           BODY_CONTENT="${BODY_CONTENT//'%'/'%25'}"
           BODY_CONTENT="${BODY_CONTENT//$'\n'/'%0A'}"
