@@ -109,21 +109,32 @@ jobs:
             [ "${{ needs.deploy_aws.result }}" != "success" ]; then
             OVERALL="failure"
           fi
+
           echo "subject=CI/CD - adidasrunnersbot: ${OVERALL} (run #${{ github.run_number }})" >> $GITHUB_OUTPUT
-          cat > body.txt <<'EOF'
-          Repositório: ${{ github.repository }}
-          Workflow: ${{ github.workflow }}
 
-          Status por job:
-          - build: ${{ needs.build.result }}
-          - publish_images: ${{ needs.publish_images.result }}
-          - deploy_aws: ${{ needs.deploy_aws.result }}
+          # Monta o corpo sem indentação extra (evita espaços no começo das linhas)
+          {
+            echo "Repositório: ${{ github.repository }}"
+            echo "Workflow: ${{ github.workflow }}"
+            echo
+            echo "Status por job:"
+            echo "- build: ${{ needs.build.result }}"
+            echo "- publish_images: ${{ needs.publish_images.result }}"
+            echo "- deploy_aws: ${{ needs.deploy_aws.result }}"
+            echo
+            echo "Branch: ${{ github.ref_name }}"
+            echo "Commit: ${{ github.sha }}"
+            echo "Autor: ${{ github.actor }}"
+            echo "Run URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          } > body.txt
 
-          Branch: ${{ github.ref_name }}
-          Commit: ${{ github.sha }}
-          Autor: ${{ github.actor }}
-          Run URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }} 
-          EOF
+          # Define a saída 'body' lendo o arquivo (escapando quebras de linha corretamente)
+          BODY_CONTENT="$(cat body.txt)"
+          BODY_CONTENT="${BODY_CONTENT//'%'/'%25'}"
+          BODY_CONTENT="${BODY_CONTENT//$'\n'/'%0A'}"
+          BODY_CONTENT="${BODY_CONTENT//$'\r'/'%0D'}"
+          echo "body=$BODY_CONTENT" >> $GITHUB_OUTPUT
+
       - name: Send Email
         uses: dawidd6/action-send-mail@v3
         with:
@@ -135,4 +146,4 @@ jobs:
           to: ${{ secrets.EMAIL_TO }}
           secure: true
           subject: ${{ steps.compose.outputs.subject }}
-          body: ${{ steps.compose.outputs.body || fromJson('null') }}
+          body: ${{ steps.compose.outputs.body }}
