@@ -241,7 +241,7 @@ O workflow está definido em .github/workflows/python-app.yml.
 3. **`send_email`**
 
    * Sempre roda (`if: always()`), independente de falhas nos jobs anteriores.
-   * Monta um resumo do status de todos os jobs (`success` ou `failure`).
+   * Monta um resumo do status de todos os jobs (`success`, `failure` ou `skipped`).
    * Envia um e-mail de notificação com:
 
      * Resultado por job.
