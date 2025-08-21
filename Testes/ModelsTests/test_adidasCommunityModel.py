@@ -18,9 +18,7 @@ def test_setEvents_assigns_list_reference_and_contents():
 
     comm.setEvents(events)
 
-    # Atribui a mesma referência (não copia)
     assert comm.events is events
-    # Mantém os itens e a ordem
     assert comm.events[0] is e1
     assert comm.events[1] is e2
 

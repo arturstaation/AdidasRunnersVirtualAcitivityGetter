@@ -8,15 +8,11 @@ import pytest
 from Services.GoogleSheetsService import GoogleSheetsService
 
 
-# --------------- Helpers ---------------
-
 def _iso_z(dt: datetime) -> str:
     return dt.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
 
 
 def _setup_sheet_with_tabs(fake_sa):
-    """Cria um sheet com abas live_activities e expired_activities mockadas e
-    conecta em fake_sa.open_by_key."""
     live_ws = MagicMock()
     expired_ws = MagicMock()
     live_ws.title = "live_activities"
@@ -36,9 +32,6 @@ def _setup_sheet_with_tabs(fake_sa):
     fake_sa.open_by_key.return_value = sheet
     return sheet, live_ws, expired_ws
 
-
-# --------------- Fixtures ---------------
-
 @pytest.fixture(autouse=True)
 def _env(monkeypatch):
     fake_creds = {"type": "service_account", "project_id": "fake"}
@@ -56,8 +49,6 @@ def logger():
     return lg
 
 
-# --------------- Testes de init/autenticação ---------------
-
 @patch("Services.GoogleSheetsService.gspread.authorize")
 @patch("Services.GoogleSheetsService.ServiceAccountCredentials._from_parsed_json_keyfile")
 def test_init_auth_and_open_sheet(p_keyfile, p_authorize, logger, caplog):
@@ -67,7 +58,6 @@ def test_init_auth_and_open_sheet(p_keyfile, p_authorize, logger, caplog):
     fake_sa.open_by_key.return_value = fake_sheet
 
     with caplog.at_level(logging.INFO):
-        # Evita que __init__ rode a limpeza de atividades ao criar a instância
         with patch("Services.GoogleSheetsService.GoogleSheetsService.removePastLiveActivities", lambda self: None):
             svc = GoogleSheetsService(logger=logger)
 
@@ -76,15 +66,12 @@ def test_init_auth_and_open_sheet(p_keyfile, p_authorize, logger, caplog):
     assert any("Pegando Tabela de Id fake-sheet-id" in m for m in caplog.messages)
 
 
-# --------------- Testes de ensureSheetsExist ---------------
-
 @patch("Services.GoogleSheetsService.gspread.authorize")
 @patch("Services.GoogleSheetsService.ServiceAccountCredentials._from_parsed_json_keyfile")
 def test_ensureSheetsExist_creates_when_missing(p_keyfile, p_authorize, logger):
     fake_sa = MagicMock()
     p_authorize.return_value = fake_sa
 
-    # sheet sem as abas
     sheet = MagicMock()
     sheet.worksheets.return_value = []
 
@@ -108,12 +95,10 @@ def test_ensureSheetsExist_creates_when_missing(p_keyfile, p_authorize, logger):
     sheet.worksheet.side_effect = _worksheet
     fake_sa.open_by_key.return_value = sheet
 
-    # Evita que ensureSheetsExist rode dentro do __init__ para não duplicar chamadas
     with patch("Services.GoogleSheetsService.GoogleSheetsService.ensureSheetsExist", lambda self: None), \
          patch("Services.GoogleSheetsService.GoogleSheetsService.removePastLiveActivities", lambda self: None):
         svc = GoogleSheetsService(logger=logger)
 
-    # Agora testamos o método real, uma única execução
     GoogleSheetsService.ensureSheetsExist(svc)
 
     assert sheet.add_worksheet.call_count == 2
@@ -149,9 +134,6 @@ def test_ensureSheetsExist_noop_when_present(p_keyfile, p_authorize, logger):
     live_ws.append_row.assert_not_called()
     expired_ws.append_row.assert_not_called()
 
-
-# --------------- Testes de removePastLiveActivities ---------------
-
 @patch("Services.GoogleSheetsService.gspread.authorize")
 @patch("Services.GoogleSheetsService.ServiceAccountCredentials._from_parsed_json_keyfile")
 def test_removePastLiveActivities_empty_or_only_header_returns(p_keyfile, p_authorize, logger, caplog):
@@ -161,7 +143,6 @@ def test_removePastLiveActivities_empty_or_only_header_returns(p_keyfile, p_auth
 
     live_ws.get_all_values.return_value = [["id", "name", "startDate", "community"]]
 
-    # cria service sem executar a limpeza automaticamente
     with patch("Services.GoogleSheetsService.GoogleSheetsService.removePastLiveActivities", lambda self: None):
         svc = GoogleSheetsService(logger=logger)
 
@@ -202,7 +183,7 @@ def test_removePastLiveActivities_separates_valid_and_expired_and_moves(p_keyfil
     args, kwargs = live_ws.append_rows.call_args
     written_rows = args[0]
     assert written_rows[0] == header
-    assert len(written_rows) == 2  # header + 1 válida
+    assert len(written_rows) == 2 
     assert written_rows[1][0] == "1"
 
     expired_ws.append_rows.assert_called_once()
@@ -249,14 +230,12 @@ def test_removePastLiveActivities_fallback_when_append_to_expired_fails(p_keyfil
     header = ["id", "name", "startDate", "community"]
     data_rows = [["10", "Válida", future, "C"], ["20", "Expirada", past, "C"]]
     live_ws.get_all_values.side_effect = [
-        [header] + data_rows,  # primeira execução
-        [header] + data_rows,  # leitura no fallback
+        [header] + data_rows,  
+        [header] + data_rows, 
     ]
 
-    # A primeira tentativa em expired deve falhar; a segunda (fallback) deve funcionar
     expired_ws.append_rows.side_effect = [Exception("falha ao anexar"), None]
 
-    # Pachar o símbolo 'datetime' dentro do módulo para o fallback usar um "aware"
     class FakeDatetime:
         @staticmethod
         def now(tz=None):
@@ -276,8 +255,6 @@ def test_removePastLiveActivities_fallback_when_append_to_expired_fails(p_keyfil
     assert live_ws.clear.call_count >= 1
     assert live_ws.append_rows.call_count >= 1
 
-
-# --------------- Testes de addNewActivities ---------------
 
 class FakeEvent:
     def __init__(self, id, name, start):
@@ -319,7 +296,7 @@ def test_addNewActivities_empty_sheet_raises(p_keyfile, p_authorize, logger):
     p_authorize.return_value = fake_sa
     sheet, live_ws, expired_ws = _setup_sheet_with_tabs(fake_sa)
 
-    live_ws.get_all_values.return_value = []  # sem cabeçalho
+    live_ws.get_all_values.return_value = []
 
     with patch("Services.GoogleSheetsService.GoogleSheetsService.removePastLiveActivities", lambda self: None):
         svc = GoogleSheetsService(logger=logger)
@@ -364,3 +341,162 @@ def test_addNewActivities_appends_only_new_future_and_sets_on_community(p_keyfil
     ids = [e.id for e in community.set_events_called_with]
     assert ids == ["2"]
     assert any("Foram Encontradas 1 novos eventos" in m for m in caplog.messages)
+@patch("Services.GoogleSheetsService.gspread.authorize")
+@patch("Services.GoogleSheetsService.ServiceAccountCredentials._from_parsed_json_keyfile")
+def test_removePastLiveActivities_only_header_triggers_empty_log_and_return(p_keyfile, p_authorize, logger, caplog):
+    fake_sa = MagicMock()
+    p_authorize.return_value = fake_sa
+    sheet, live_ws, expired_ws = _setup_sheet_with_tabs(fake_sa)
+
+    live_ws.get_all_values.return_value = [["id", "name", "startDate", "community"]]
+
+    with patch("Services.GoogleSheetsService.GoogleSheetsService.removePastLiveActivities", lambda self: None):
+        svc = GoogleSheetsService(logger=logger)
+
+    with caplog.at_level(logging.INFO):
+        svc.removePastLiveActivities()
+
+    assert any("Tabela live_activities vazia" in m for m in caplog.messages)
+    live_ws.clear.assert_not_called()
+    expired_ws.append_rows.assert_not_called()
+
+
+@patch("Services.GoogleSheetsService.gspread.authorize")
+@patch("Services.GoogleSheetsService.ServiceAccountCredentials._from_parsed_json_keyfile")
+def test_removePastLiveActivities_fallback_parse_error_logs_and_returns(p_keyfile, p_authorize, logger, caplog):
+    fake_sa = MagicMock()
+    p_authorize.return_value = fake_sa
+    sheet, live_ws, expired_ws = _setup_sheet_with_tabs(fake_sa)
+
+    now_aware = datetime(2025, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
+    header = ["id", "name", "startDate", "community"]
+    future = (now_aware + timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+    past = (now_aware - timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+    first_rows = [header, ["1", "ok", future, "X"], ["2", "exp", past, "X"]]
+
+    fallback_rows = [header, ["3", "ruim", "data-invalida", "X"]]
+
+    live_ws.get_all_values.side_effect = [
+        first_rows,   
+        fallback_rows
+    ]
+
+    expired_ws.append_rows.side_effect = [Exception("falha append expired")]
+
+    class FakeDatetime:
+        @staticmethod
+        def now(tz=None):
+            return now_aware
+        @staticmethod
+        def strptime(s, fmt):
+            return datetime.strptime(s, fmt)
+
+    with patch("Services.GoogleSheetsService.GoogleSheetsService.removePastLiveActivities", lambda self: None):
+        svc = GoogleSheetsService(logger=logger)
+
+    with patch("Services.GoogleSheetsService.datetime", FakeDatetime):
+        with caplog.at_level(logging.INFO):
+            svc.removePastLiveActivities()
+
+    assert any("Falha ao anexar em expired" in m for m in caplog.messages)
+    assert any("Pulando validação das datas para evitar erro catastrofico" in m for m in caplog.messages)
+    assert expired_ws.append_rows.call_count == 1
+
+
+@patch("Services.GoogleSheetsService.gspread.authorize")
+@patch("Services.GoogleSheetsService.ServiceAccountCredentials._from_parsed_json_keyfile")
+def test_removePastLiveActivities_fallback_moves_expired_when_present(p_keyfile, p_authorize, logger, caplog):
+    fake_sa = MagicMock()
+    p_authorize.return_value = fake_sa
+    sheet, live_ws, expired_ws = _setup_sheet_with_tabs(fake_sa)
+
+    now_aware = datetime(2025, 1, 1, 10, 0, 0, tzinfo=timezone.utc)
+    header = ["id", "name", "startDate", "community"]
+    future = (now_aware + timedelta(hours=3)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+    past1 = (now_aware - timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+    past2 = (now_aware - timedelta(hours=2)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+
+    first_rows = [header, ["10", "Futuro", future, "C"], ["20", "Exp1", past1, "C"]]
+    fallback_rows = [header, ["30", "Exp2", past2, "C"], ["40", "Futuro2", future, "C"]]
+
+    live_ws.get_all_values.side_effect = [
+        first_rows,
+        fallback_rows
+    ]
+
+    expired_ws.append_rows.side_effect = [Exception("falha para ir a expired"), None]
+
+    class FakeDatetime:
+        @staticmethod
+        def now(tz=None):
+            return now_aware
+        @staticmethod
+        def strptime(s, fmt):
+            return datetime.strptime(s, fmt)
+
+    with patch("Services.GoogleSheetsService.GoogleSheetsService.removePastLiveActivities", lambda self: None):
+        svc = GoogleSheetsService(logger=logger)
+
+    with patch("Services.GoogleSheetsService.datetime", FakeDatetime):
+        with caplog.at_level(logging.INFO):
+            svc.removePastLiveActivities()
+
+    assert any("Falha ao anexar em expired" in m for m in caplog.messages)
+    assert any("Movendo" in m and "Atividades expiradas" in m for m in caplog.messages)
+
+    assert expired_ws.append_rows.call_count >= 2
+    args_fallback, kwargs_fallback = expired_ws.append_rows.call_args
+    moved_rows = args_fallback[0]
+    assert len(moved_rows) >= 1
+    assert any(r[0] == "30" for r in moved_rows)
+
+
+@patch("Services.GoogleSheetsService.gspread.authorize")
+@patch("Services.GoogleSheetsService.ServiceAccountCredentials._from_parsed_json_keyfile")
+def test_addNewActivities_logs_and_appends_when_new_rows_exist(p_keyfile, p_authorize, logger, caplog):
+    fake_sa = MagicMock()
+    p_authorize.return_value = fake_sa
+    sheet, live_ws, expired_ws = _setup_sheet_with_tabs(fake_sa)
+
+    now = datetime.now(timezone.utc)
+    header = ["id", "name", "startDate", "community"]
+    live_ws.get_all_values.return_value = [header, ["1", "Existe", (now + timedelta(days=1)).strftime("%Y-%m-%dT%H:%M:%S.%fZ"), "AR SP"]]
+
+    class _Evt:
+        def __init__(self, id_, name, dt):
+            self.id = id_
+            self.name = name
+            self.startDate = dt
+
+    dup = _Evt("1", "Dup", (now + timedelta(hours=4)).strftime("%Y-%m-%dT%H:%M:%S.%fZ"))
+    newf = _Evt("2", "Novo", (now + timedelta(hours=5)).strftime("%Y-%m-%dT%H:%M:%S.%fZ"))
+    past = _Evt("3", "Passado", (now - timedelta(hours=2)).strftime("%Y-%m-%dT%H:%M:%S.%fZ"))
+
+    class _Comm:
+        def __init__(self):
+            self.name = "AR SP"
+            self.events = [dup, newf, past]
+            self.set_events_called_with = None
+        def setEvents(self, events):
+            self.set_events_called_with = events
+
+    comm = _Comm()
+
+    with patch("Services.GoogleSheetsService.GoogleSheetsService.removePastLiveActivities", lambda self: None):
+        svc = GoogleSheetsService(logger=logger)
+
+    with caplog.at_level(logging.INFO):
+        svc.addNewActivities(comm)
+
+    assert any("Foram Encontradas 1 novos eventos" in m for m in caplog.messages)
+    assert any("Adicionando Novas Atividades da Comunidade AR SP ao GoogleSheets" in m for m in caplog.messages)
+
+    live_ws.append_rows.assert_called_once()
+    args, kwargs = live_ws.append_rows.call_args
+    rows = args[0]
+    assert rows == [["2", "Novo", newf.startDate, "AR SP"]]
+    assert kwargs.get("value_input_option") == "RAW"
+
+    assert comm.set_events_called_with is not None
+    ids = [e.id for e in comm.set_events_called_with]
+    assert ids == ["2"]

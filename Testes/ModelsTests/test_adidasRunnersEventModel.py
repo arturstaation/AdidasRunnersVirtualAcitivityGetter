@@ -10,7 +10,6 @@ def test_init_sets_all_fields_correctly():
     )
     assert ev.id == "123"
     assert ev.name == "Treino Leve"
-    # category deve ser string com o valor exato informado
     assert ev.category == "Run"
     assert ev.startDate == "2025-01-01T10:00:00Z"
 

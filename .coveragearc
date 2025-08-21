@@ -5,7 +5,6 @@ branch = True
 source =
 src
 omit =
-# Opcional: excluir quais arquivos NUNCA entram na medição
 /tests/
 /Testes/
 /venv/

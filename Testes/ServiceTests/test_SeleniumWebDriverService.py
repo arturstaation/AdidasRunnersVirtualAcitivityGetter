@@ -24,10 +24,6 @@ def _make_proxy_settings():
 
 
 def _patch_driver_stack(win_or_linux="win"):
-    """
-    Prepara patches de: Options, Service, webdriver.Chrome, ProxyService, sys.platform, TimeoutException.
-    Retorna (patchers, mocks_ns) onde mocks_ns permite acesso por atributo (ponto).
-    """
     options_mock_cls = MagicMock()
     options_mock = MagicMock()
     options_mock_cls.return_value = options_mock
@@ -189,60 +185,40 @@ def test_restartDriver_calls_stop_and_getDriver_even_if_stop_raises(logger):
         p_get.assert_called_once()
 
 def test_getJsonFromUrl_page_load_timeout_then_success(logger):
-    """
-    Cobre linhas 81-82: warning 'A pagina ... não carregou a tempo' e raise TimeoutException.
-    Na primeira tentativa, driver.get levanta TimeoutException; depois reinicia e tem sucesso.
-    """
     patchers, m = _patch_driver_stack()
     with patchers[0], patchers[1], patchers[2], patchers[3], patchers[4], patchers[5]:
         svc = SeleniumWebDriverService(logger=logger, utilsService=MagicMock())
 
-        # Primeira chamada a get levanta TimeoutException; segunda funciona
         m.driver.get.side_effect = [m.TimeoutException("timeout on load"), None]
 
-        # Quando carrega com sucesso, há um <pre> válido
         pre = MagicMock()
         pre.text = json.dumps({"ok": True, "after": "timeout"})
-        # Usando o mesmo padrão dos seus testes pré-existentes (find_element)
         m.driver.find_element.return_value = pre
 
         with patch.object(SeleniumWebDriverService, "restartDriver") as p_restart:
             data = svc.getJsonFromUrl("http://example.com/api", tentativas=3)
             assert data == {"ok": True, "after": "timeout"}
-            # get chamado duas vezes: 1a falha por TimeoutException, 2a sucesso
             assert m.driver.get.call_count == 2
-            # Após a TimeoutException, deve reiniciar o driver uma vez
             p_restart.assert_called_once()
 
 
 def test_getJsonFromUrl_unknown_error_on_pre_then_success(logger):
-    """
-    Cobre linhas 93-95: warning 'Erro desconhecido...' e raise Exception('Erro Desconhecido').
-    Na primeira tentativa, ocorre erro ao acessar/preparar o <pre> (ex.: ao ler .text).
-    Depois reinicia e tem sucesso.
-    """
     patchers, m = _patch_driver_stack()
     with patchers[0], patchers[1], patchers[2], patchers[3], patchers[4], patchers[5]:
         svc = SeleniumWebDriverService(logger=logger, utilsService=MagicMock())
 
-        # Simula get ok em ambas as tentativas
         m.driver.get.side_effect = [None, None]
 
-        # Primeiro ciclo: o elemento <pre> existe, mas ao acessar .text ocorre erro inesperado
         pre_broken = MagicMock()
         type(pre_broken).text = property(lambda self: (_ for _ in ()).throw(Exception("unexpected pre error")))
 
-        # Segundo ciclo: sucesso ao obter o JSON
         pre_ok = MagicMock()
         pre_ok.text = json.dumps({"ok": True, "after": "unknown-error"})
 
-        # Alterna o retorno do find_element entre "quebrado" e "ok"
         m.driver.find_element.side_effect = [pre_broken, pre_ok]
 
         with patch.object(SeleniumWebDriverService, "restartDriver") as p_restart:
             data = svc.getJsonFromUrl("http://example.com/api", tentativas=3)
             assert data == {"ok": True, "after": "unknown-error"}
-            # get chamado duas vezes: 1a tentativa com erro interno, 2a sucesso
             assert m.driver.get.call_count == 2
-            # Deve reiniciar após o erro desconhecido
             p_restart.assert_called_once()

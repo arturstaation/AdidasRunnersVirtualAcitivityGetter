@@ -29,7 +29,6 @@ def community_sp():
 
 
 def test_get_communities_builds_list(service, selenium_mock, caplog):
-    # Arrange
     payload = {
         "_embedded": {
             "communities": [
@@ -40,11 +39,9 @@ def test_get_communities_builds_list(service, selenium_mock, caplog):
     }
     selenium_mock.getJsonFromUrl.return_value = payload
 
-    # Act
     with caplog.at_level(logging.INFO):
         result = service.getAdidasRunnersCommunity()
 
-    # Assert
     assert isinstance(result, list)
     assert len(result) == 2
     assert isinstance(result[0], AdidasCommunity)
@@ -53,11 +50,9 @@ def test_get_communities_builds_list(service, selenium_mock, caplog):
     assert result[1].id == "2"
     assert result[1].name == "Adidas Runners AR Rio de Janeiro"
 
-    # URL correta foi chamada
     expected_url = "https://www.adidas.com.br/adidasrunners/ar-api/gw/default/gw-api/v2/connect/communities?limit=100&type=AdidasRunners"
     selenium_mock.getJsonFromUrl.assert_called_once_with(expected_url)
 
-    # Logs básicos
     assert any("Obtendo dados das comunidades Adidas Runners" in m for m in caplog.messages)
     assert any("Criando lista de comunidades" in m for m in caplog.messages)
 
@@ -71,7 +66,6 @@ def test_get_communities_empty_list(service, selenium_mock):
 
 
 def test_get_communities_missing_embedded_raises(service, selenium_mock):
-    # Sem a chave esperada -> comportamento atual levanta KeyError
     selenium_mock.getJsonFromUrl.return_value = {}
 
     with pytest.raises(KeyError):
@@ -79,7 +73,6 @@ def test_get_communities_missing_embedded_raises(service, selenium_mock):
 
 
 def test_get_events_filters_virtual(service, selenium_mock, community_sp, caplog):
-    # Dois eventos virtuais (sem 'meta.adidas_runners_locations') e um presencial
     payload = {
         "_embedded": {
             "events": [
@@ -88,7 +81,6 @@ def test_get_events_filters_virtual(service, selenium_mock, community_sp, caplog
                     "title": "Treino Virtual 5K",
                     "category": "RUN",
                     "eventStartDate": "2025-01-01T10:00:00Z",
-                    # virtual: falta meta.adidas_runners_locations
                     "meta": {},
                 },
                 {
@@ -103,7 +95,6 @@ def test_get_events_filters_virtual(service, selenium_mock, community_sp, caplog
                     "title": "Yoga em Casa",
                     "category": "TRAINING",
                     "eventStartDate": "2025-01-03T19:00:00Z",
-                    # virtual porque meta ausente por completo
                 },
             ]
         }
@@ -113,18 +104,15 @@ def test_get_events_filters_virtual(service, selenium_mock, community_sp, caplog
     with caplog.at_level(logging.INFO):
         events = service.getAdidasRunnersCommunityEvents(community_sp)
 
-    # Deve retornar apenas os virtuais: e1 e e3
     assert isinstance(events, list)
     assert len(events) == 2
     assert all(isinstance(ev, AdidasRunnersEvent) for ev in events)
     ids = {ev.id for ev in events}
     assert ids == {"e1", "e3"}
 
-    # URL correta
     expected_url = f"https://www.adidas.com.br/adidasrunners/ar-api/gw/default/gw-api/v2/events/communities/{community_sp.id}?countryCodes=BR"
     selenium_mock.getJsonFromUrl.assert_called_once_with(expected_url)
 
-    # Logs básicos
     assert any(f"Obtendo dados Eventos da Comunidade {community_sp.name}" in m for m in caplog.messages)
     assert any(f"Criando Lista de Eventos da Comunidade {community_sp.name}" in m for m in caplog.messages)
 

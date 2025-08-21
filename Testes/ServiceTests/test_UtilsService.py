@@ -20,14 +20,12 @@ def test_formatDate_with_Z_suffix(logger):
 
 def test_formatDate_with_explicit_utc_offset(logger):
     svc = UtilsService(logger=logger)
-    # Equivalente a Z/UTC
     out = svc.formatDate("2025-01-02T03:04:05+00:00")
     assert out == "02/01/2025 às 03:04"
 
 
 def test_formatDate_with_non_utc_offset(logger):
     svc = UtilsService(logger=logger)
-    # Offset +03:00 — formatação deve refletir o horário recebido (não converte timezone)
     out = svc.formatDate("2025-01-02T03:04:05+03:00")
     assert out == "02/01/2025 às 03:04"
 
