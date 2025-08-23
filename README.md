@@ -82,6 +82,7 @@ Na raiz do projeto, crie um arquivo chamado `.env` com o seguinte conteúdo:
 TOKEN=seu_token_aqui
 CHAT_ID=seu_chat_id_aqui
 ADMIN_CHAT_ID=seu_admin_chat_id_aqui
+PROXY_ENABLED=se_voce_quer_usar_proxy
 PROXY_USER=seu_proxy_user_aqui
 PROXY_PASSWORD=seu_proxy_password_aqui
 GOOGLE_CREDENTIALS=sua_google_credentials_aqui
@@ -90,7 +91,8 @@ GOOGLE_SHEET_ID=sua_google_sheet_id
 
 - TOKEN: Token do bot do Telegram (fornecido pelo BotFather).
 - CHAT_ID: ID do chat de destino para mensagens do bot (usuário ou grupo).
-- ADMIN_CHAT_ID: ID do chat para mensagens administrativas (logs, alertas).
+- ADMIN_CHAT_ID: ID do chat para mensagens administrativas (logs, alertas). Caso não seja fornecido, não enviara as mensagens voltadas para administradores.
+- PROXY_ENABLED: Bool referente ao desejo de usar proxy. Caso não seja fornecdio sera interpretado como False e não usará no processamento
 - PROXY_USER / PROXY_PASSWORD: Credenciais do Proxy DataImpulse.
 - GOOGLE_CREDENTIALS: Conteúdo do JSON de credenciais da conta de serviço do Google (veja abaixo como gerar).
 - GOOGLE_SHEET_ID: ID da planilha do Google Sheets.
@@ -150,16 +152,6 @@ Resultado: TOKEN do bot (ex.: `1234567890:ABCdefGhIJK...`).
 - Defina o papel como “Editor” e salve.
 
 🎥 [Como integrar Python com Google Sheets e pegar o GOOGLE_CREDENTIALS/GOOGLE_SHEET_ID](https://www.youtube.com/watch?v=T1vqS1NL89E)
-#### Segurança e boas práticas
-
-- Nunca commite o `.env` ou o JSON de credenciais. Use `.gitignore`.
-- Em produção, prefira armazenar segredos em um Secret Manager (GCP Secret Manager, Doppler, 1Password, etc.).
-- Se precisar colocar o JSON em `GOOGLE_CREDENTIALS`:
-  - Converta o arquivo para base64:
-    - macOS/Linux: `base64 -i credenciais.json | tr -d '\n'`
-    - Windows (PowerShell): `[Convert]::ToBase64String([IO.File]::ReadAllBytes("credenciais.json"))`
-  - Armazene o resultado na variável e decodifique no app.
-- Rotacione tokens e chaves periodicamente e revogue acessos não utilizados.
 
 ### 3. ⚙️ Instalar Dependências
 
