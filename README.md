@@ -13,6 +13,12 @@ adidas-runners-bot/
 │   └── workflows/                         # Onde ficam os workflows de CI/CD do GitHub Actions
 │       └── python-app.yml                 # Workflow principal
 │    
+├── ReadmeResources                        # Imagens com os resultados de processamentos
+│   ├── ErroAoBuscarAtividades-ChatAdmin.png
+│   ├── SucessoComAtividadesEncontradas-ChatAdmin.png              
+│   ├── SucessoComAtividadesEncontradas-ChatAdmin.png              
+│   └── SucessoSemAtividadesEncontradas-ChatAdmin.png                
+│    
 ├── src/
 │   ├── Services/                          # Diretório principal dos serviços
 │   │   ├── __init__.py
@@ -311,3 +317,42 @@ O workflow é acionado automaticamente em:
 * **manual** via **workflow\_dispatch** no GitHub Actions
 
 ---
+
+## 🧪 Exemplos de Funcionamento 
+
+1) Sucesso com novas atividades encontradas
+- Cenário: Existem novos eventos na comunidade desde a última execução.
+- Comportamento esperado:
+  - Bot envia mensagem detalhada no chat principal com a lista de eventos novos.
+  - Bot envia resumo administrativo no chat de admin (status do processamento, processingId).
+  - Planilha: eventos novos são marcados como “ativos”; eventos antigos não mais disponíveis são movidos/atualizados para “inativos”.
+- Evidências:
+  - Chat (usuário): 
+    ![Resultado do Teste](ReadmeResources/SucessoComAtividadesEncontradas-ChatNormal.png)
+  - Chat (admin): 
+    ![Resultado do Teste](ReadmeResources/SucessoComAtividadesEncontradas-ChatAdmin.png)
+
+2) Sucesso sem nenhuma atividade encontrada
+- Cenário: Não há eventos novos comparado ao estado atual.
+- Comportamento esperado:
+  - Bot não envia mensagem no chat principal.
+  - Bot envia um aviso no chat admin informando que nenhuma atividade nova foi encontrada, juntamente com o processingId e status do processamento.
+  - Planilha permanece inalterada.
+- Evidências:
+  - Chat (admin):
+    ![Resultado do Teste](ReadmeResources/SucessoSemAtividadesEncontradas-ChatAdmin.png)
+
+3) Erro de processamento
+- Cenário: Alguma etapa falha.
+- Comportamento esperado:
+  - Bot notifica imediatamente o chat admin com:
+    - Status do processamento
+    - Processing Id
+    - Erro retornado
+    - Stacktracree
+  - Nenhuma mensagem é enviada ao chat principal.
+- Evidências:
+  - Chat (admin):
+    ![Resultado do Teste](ReadmeResources/ErroAoBuscarAtividades-ChatAdmin.png)
+
+Esses exemplos tornam o comportamento esperado explícito, ajudam na validação manual/automática e facilitam troubleshooting quando algo sair do previsto.
