@@ -22,6 +22,7 @@ def main():
         logger.info("Carregando Variaveis de ambiente")  
         load_dotenv()
         utilsService = UtilsService(logger)
+        utilsService.validateEnvVariables()
         telegramService = TelegramService(logger, utilsService)
         googleSheetsService = GoogleSheetsService(logger)
         seleniumWebDriverService = SeleniumWebDriverService(logger,utilsService)
