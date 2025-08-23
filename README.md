@@ -74,7 +74,6 @@ adidas-runners-bot/
 git clone https://github.com/seu-usuario/adidas-runners-bot.git
 cd adidas-runners-bot/src
 ```
-
 ### 2. 📄 Crie o arquivo `.env`
 
 Na raiz do projeto, crie um arquivo chamado `.env` com o seguinte conteúdo:
@@ -89,17 +88,78 @@ GOOGLE_CREDENTIALS=sua_google_credentials_aqui
 GOOGLE_SHEET_ID=sua_google_sheet_id
 ```
 
-- `TOKEN`: o token do seu bot do Telegram.  
-- `CHAT_ID`: o ID do chat para onde o bot enviará as mensagens.
-- `ADMIN_CHAT_ID`: o ID do chat para onde o bot enviará as mensagens de cunho administrativo.
-- `PROXY_USER`: Usuario do Proxy DataImpulse
-- `PROXY_PASSWORD`:  Senha do Usuario Proxy DataImpulse
-- `GOOGLE_CREDENTIALS`: Credenciais da conta de serviço gerado para manipular as planilhas
-- `GOOGLE_SHEET_ID`: Id da Planilha no GoogleDocs
+- TOKEN: Token do bot do Telegram (fornecido pelo BotFather).
+- CHAT_ID: ID do chat de destino para mensagens do bot (usuário ou grupo).
+- ADMIN_CHAT_ID: ID do chat para mensagens administrativas (logs, alertas).
+- PROXY_USER / PROXY_PASSWORD: Credenciais do Proxy DataImpulse.
+- GOOGLE_CREDENTIALS: Conteúdo do JSON de credenciais da conta de serviço do Google (veja abaixo como gerar).
+- GOOGLE_SHEET_ID: ID da planilha do Google Sheets.
 
+Dicas:
+- Use valores diferentes para CHAT_ID e ADMIN_CHAT_ID se quiser separar mensagens operacionais de notificações ao usuário.
+- Em ambientes de produção, prefira injetar variáveis de ambiente via orquestrador/CI em vez de manter um `.env` local.
 
-📌 Para aprender a obter essas informações, siga este tutorial:  
-🎥 [Como criar um bot no Telegram e pegar o TOKEN/CHAT_ID](https://www.youtube.com/watch?v=uGaJVTPBpkM)
+#### Como obter os dados do Telegram
+
+1) Criar o bot no Telegram (BotFather)
+- No Telegram, procure por “BotFather” e clique em Start.
+- Envie o comando: `/newbot`.
+- Forneça um nome (ex.: “Meu Bot Notificador”).
+- Forneça um username que termine com “bot” (ex.: `meu_notificador_bot`).
+- Ao finalizar, o BotFather exibirá o HTTP API Token. Guarde-o com segurança — ele será o seu `TOKEN`.
+
+Resultado: TOKEN do bot (ex.: `1234567890:ABCdefGhIJK...`).
+
+2) Obter o seu Chat ID
+- No Telegram, procure por “GetIDs Bot” ou “userinfobot” e clique em Start.
+- O bot responderá com seu ID numérico (chat privado). Use esse valor como `CHAT_ID`.
+- Para grupos: adicione o seu bot ao grupo, envie uma mensagem no grupo e use um bot de IDs para obter o `chat_id` do grupo (geralmente começa com `-100...`).
+
+🎥 [Como criar um bot no Telegram e pegar o TOKEN/CHAT_ID/ADMIN_CHAT_ID](https://www.youtube.com/watch?v=uGaJVTPBpkM)
+
+#### Como obter os dados do Google (Sheets e Drive)
+
+1) Criar um projeto no Google Cloud
+- Acesse https://console.cloud.google.com e faça login.
+- Topo da página: “Selecionar projeto” → “Novo projeto” → defina um nome e crie.
+
+2) Habilitar as APIs necessárias
+- Menu: “APIs e serviços” → “Biblioteca”.
+- Habilite:
+  - Google Drive API
+  - Google Sheets API
+
+3) Criar uma conta de serviço
+- Menu: “IAM e administrador” → “Contas de serviço” → “Criar conta de serviço”.
+- Defina nome (ex.: `svc-sheets-drive`) e conclua.
+- Opcionalmente atribua papéis (ex.: “Editor”). Isso pode ser ajustado depois.
+
+4) Gerar e baixar a chave (JSON)
+- Abra a conta de serviço criada → aba “Chaves” → “Adicionar chave” → “Criar nova chave”.
+- Tipo: JSON → “Criar”. Um arquivo `.json` será baixado. Guarde-o em local seguro e adicione ao `.gitignore`.
+
+5) Obter o ID da planilha
+- Abra a planilha no Google Sheets.
+- Na URL, copie o trecho entre `/d/` e `/edit`.
+  - Ex.: URL `https://docs.google.com/spreadsheets/d/1AbCDeFGhIjkLMNOPqrSTUVwxyz1234567890/edit`
+  - `GOOGLE_SHEET_ID = 1AbCDeFGhIjkLMNOPqrSTUVwxyz1234567890`
+
+6) Compartilhar a planilha com a conta de serviço
+- Na planilha, clique em “Compartilhar”.
+- Adicione o e-mail da conta de serviço (ex.: `nome-da-conta@seu-projeto.iam.gserviceaccount.com`).
+- Defina o papel como “Editor” e salve.
+
+🎥 [Como integrar Python com Google Sheets e pegar o GOOGLE_CREDENTIALS/GOOGLE_SHEET_ID](https://www.youtube.com/watch?v=T1vqS1NL89E)
+#### Segurança e boas práticas
+
+- Nunca commite o `.env` ou o JSON de credenciais. Use `.gitignore`.
+- Em produção, prefira armazenar segredos em um Secret Manager (GCP Secret Manager, Doppler, 1Password, etc.).
+- Se precisar colocar o JSON em `GOOGLE_CREDENTIALS`:
+  - Converta o arquivo para base64:
+    - macOS/Linux: `base64 -i credenciais.json | tr -d '\n'`
+    - Windows (PowerShell): `[Convert]::ToBase64String([IO.File]::ReadAllBytes("credenciais.json"))`
+  - Armazene o resultado na variável e decodifique no app.
+- Rotacione tokens e chaves periodicamente e revogue acessos não utilizados.
 
 ### 3. ⚙️ Instalar Dependências
 
