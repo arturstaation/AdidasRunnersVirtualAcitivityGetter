@@ -222,3 +222,26 @@ def test_getJsonFromUrl_unknown_error_on_pre_then_success(logger):
             assert data == {"ok": True, "after": "unknown-error"}
             assert m.driver.get.call_count == 2
             p_restart.assert_called_once()
+
+def test_getDriver_with_proxy_builds_seleniumwire_options_and_calls_proxy(logger):
+
+    patchers, m = _patch_driver_stack(win_or_linux="win")
+    utils_mock = MagicMock()
+    utils_mock.strToBool.return_value = True
+
+    with patchers[0], patchers[1], patchers[2], patchers[3], patchers[4], patchers[5]:
+        svc = SeleniumWebDriverService(logger=logger, utilsService=utils_mock)
+
+        m.proxy_cls.assert_called_once_with(logger)
+        m.proxy.getProxies.assert_called_once()
+        m.proxy.getProxySettings.assert_called_once()
+
+        _, kwargs = m.chrome_cls.call_args
+        assert "seleniumwire_options" in kwargs
+        sw_opts = kwargs["seleniumwire_options"]
+        assert "proxy" in sw_opts
+        expected_url = "http://user:pass@1.2.3.4:8080"
+        assert sw_opts["proxy"]["http"] == expected_url
+        assert sw_opts["proxy"]["https"] == expected_url
+
+        assert svc.driver is m.driver

@@ -17,7 +17,6 @@ class TelegramService:
         self.token = os.getenv("TOKEN")
         self.chatId = os.getenv("CHAT_ID")
         self.adminChatId = os.getenv("ADMIN_CHAT_ID")
-        print(self.token)
         self.bot = telegram.Bot(self.token)
 
     def generateMessage(self: Self, arCommunity: AdidasCommunity, messages: List[str]) -> str:
@@ -53,6 +52,8 @@ class TelegramService:
                 await self.bot.sendMessage(chat_id=self.chatId, text=message, parse_mode='HTML')
     
     async def sendTelegramAdminMessage(self:Self, message: str):
+        if(self.adminChatId is None):
+            return
         async with self.bot:
             self.logger.info(f"Enviando Mensagem ao Administrador")
             self.logger.info(f"Enviando Mensagem {message} Para o chat {self.adminChatId}")

@@ -11,6 +11,7 @@ from typing import Self
 from .UtilsService import UtilsService
 from .ProxyService import ProxyService
 import traceback
+import os
 import sys
 from tempfile import mkdtemp
 
@@ -19,11 +20,13 @@ class SeleniumWebDriverService:
     driver : webdriver
     utilsService: UtilsService
     logger : Logger
+    hasProxy: bool
 
     def __init__(self: Self, logger : Logger, utilsService: UtilsService):
         self.logger = logger
         self.logger.info("Inicializando SeleniumWebDriver")
         self.utilsService = utilsService
+        self.hasProxy=self.utilsService.strToBool(os.getenv('PROXY_ENABLED', "False"))
         self.getDriver()
 
     def getDriver(self: Self):
@@ -41,21 +44,23 @@ class SeleniumWebDriverService:
         options.add_argument(f"--disk-cache-dir={mkdtemp()}")
         options.add_argument("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36")
 
-        proxyService = ProxyService(self.logger)
-        proxyService.getProxies()
+        seleniumwireOptions = {}
+        if(self.hasProxy):
+            proxyService = ProxyService(self.logger)
+            proxyService.getProxies()
 
-        self.logger.info("Gerando Proxy")
-        proxySettings = proxyService.getProxySettings()
+            self.logger.info("Gerando Proxy")
+            proxySettings = proxyService.getProxySettings()
 
-        proxyUrl= f"http://{proxySettings.proxyUser}:{proxySettings.proxyPassword}@{proxySettings.proxyAddress}:{proxySettings.proxyPort}"
+            proxyUrl= f"http://{proxySettings.proxyUser}:{proxySettings.proxyPassword}@{proxySettings.proxyAddress}:{proxySettings.proxyPort}"
 
-        seleniumwireOptions = {
-            "proxy":{
-                "http": proxyUrl,
-                "https": proxyUrl
+            seleniumwireOptions = {
+                "proxy":{
+                    "http": proxyUrl,
+                    "https": proxyUrl
+                }
             }
-        }
-        
+
         if sys.platform.startswith("win"):
             service = Service(executable_path="../chromedriver.exe")
         elif sys.platform.startswith("linux"):

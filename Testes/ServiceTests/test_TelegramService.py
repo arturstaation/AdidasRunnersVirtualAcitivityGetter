@@ -188,3 +188,29 @@ def test_generateAdminSuccessMessage_includes_empty_when_true(p_bot, logger, uti
     assert "✅ Processamento Finalizado com Sucesso" in msg_false
     assert f"<code>{html.escape(pid)}</code>" in msg_false
     assert "não encontrou nenhuma nova atividade" not in msg_false
+def _mk_bot():
+    bot = AsyncMock()
+    bot.__aenter__.return_value = bot
+    bot.__aexit__.return_value = False
+    bot.sendMessage = AsyncMock()
+    return bot
+
+@pytest.mark.asyncio
+@patch("Services.TelegramService.telegram.Bot")
+def test_sendTelegramAdminMessage_returns_early_when_admin_missing(p_bot, logger, utils, monkeypatch):
+    monkeypatch.delenv("ADMIN_CHAT_ID", raising=False)
+
+    bot = _mk_bot()
+    p_bot.return_value = bot
+
+    from Services.TelegramService import TelegramService
+    svc = TelegramService(logger=logger, utilsService=utils)
+
+    assert svc.adminChatId is None
+
+    asyncio.run(svc.sendTelegramAdminMessage("should-not-send"))
+
+    bot.sendMessage.assert_not_awaited()
+
+    bot.__aenter__.assert_not_called()
+    bot.__aexit__.assert_not_called()
