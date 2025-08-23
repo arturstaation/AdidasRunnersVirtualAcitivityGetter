@@ -19,9 +19,9 @@ class AdidasService:
         arCommunityList: List[AdidasCommunity] = [] 
         self.logger.info("Criando lista de comunidades")
         for comunidade in data["_embedded"]["communities"]:
-            id_ = comunidade["id"]
+            id = comunidade["id"]
             name = comunidade["name"]
-            arCommunityList.append(AdidasCommunity(id_, name))
+            arCommunityList.append(AdidasCommunity(id, name))
 
         return arCommunityList
 
@@ -29,13 +29,13 @@ class AdidasService:
         url = f"https://www.adidas.com.br/adidasrunners/ar-api/gw/default/gw-api/v2/events/communities/{community.id}?countryCodes=BR"
         self.logger.info(f"Obtendo dados Eventos da Comunidade {community.name}")
         data = self.seleniumWebDriverService.getJsonFromUrl(url)
-        virtual_events : List[AdidasRunnersEvent] = []
+        virtualEvents : List[AdidasRunnersEvent] = []
         
         self.logger.info(f"Criando Lista de Eventos da Comunidade {community.name}")
         for event in data["_embedded"]["events"]:
             if not event.get("meta", {}).get("adidas_runners_locations"):
-                virtual_events.append(AdidasRunnersEvent(event["id"], event["title"], event["category"], event["eventStartDate"]))
+                virtualEvents.append(AdidasRunnersEvent(event["id"], event["title"], event["category"], event["eventStartDate"]))
 
-        if(len(virtual_events) == 0):
+        if(len(virtualEvents) == 0):
             self.logger.info(f"Nenhum Evento Virtual Foi encontrado para a comunidade {community.name}")
-        return virtual_events
+        return virtualEvents
