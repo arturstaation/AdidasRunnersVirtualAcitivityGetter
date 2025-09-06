@@ -1,0 +1,294 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  ImageUri:
+    Type: String
+  LambdaName:
+    Type: String
+  StateMachineName:
+    Type: String
+  EventRuleName:
+    Type: String
+  EventScheduleExpression:
+    Type: String
+    Default: "rate(6 hours)"
+  ScheduleStart:
+    Type: String
+    Description: "Start time for the schedule (ISO8601) e.g. 2025-09-06T14:00:00Z"
+  MemorySize:
+    Type: Number
+    Default: 1024
+  EphemeralStorageSize:
+    Type: Number
+    Default: 512
+  Timeout:
+    Type: Number
+    Default: 900  # 15 minutos
+  SnapStart:
+    Type: String
+    Default: "None"
+    AllowedValues: ["None", "PublishedVersions"]
+
+Resources:
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+
+  AppFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Ref LambdaName
+      Role: !GetAtt LambdaExecutionRole.Arn
+      PackageType: Image
+      Code:
+        ImageUri: !Ref ImageUri
+      MemorySize: !Ref MemorySize
+      Timeout: !Ref Timeout
+      EphemeralStorage:
+        Size: !Ref EphemeralStorageSize
+      SnapStart:
+        ApplyOn: !Ref SnapStart
+      Environment:
+        Variables:
+          ADMIN_CHAT_ID: !Ref AdminChatId
+          CHAT_ID: !Ref ChatId
+          GOOGLE_CREDENTIALS: !Ref GoogleCredentials
+          GOOGLE_SHEET_ID: !Ref GoogleSheetId
+          PROXY_ENABLED: !Ref ProxyEnabled
+          PROXY_PASSWORD: !Ref ProxyPassword
+          PROXY_USER: !Ref ProxyUser
+          TOKEN: !Ref Token
+          AGENT: !Ref Agent
+
+  StepFunctionsExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: states.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: AllowLambdaInvoke
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - lambda:InvokeFunction
+                Resource: !GetAtt AppFunction.Arn
+
+  MyStateMachine:
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      StateMachineName: !Ref StateMachineName
+      RoleArn: !GetAtt StepFunctionsExecutionRole.Arn
+      DefinitionString: !Sub |
+        {
+          "Comment": "Executa Lambda com retries em 30m, 1h e 3h",
+          "StartAt": "RunJob",
+          "States": {
+            "RunJob": {
+              "Type": "Task",
+              "Resource": "${AppFunction.Arn}",
+              "Next": "CheckResult1",
+              "Catch": [
+                {
+                  "ErrorEquals": [
+                    "States.ALL"
+                  ],
+                  "Next": "Wait30m"
+                }
+              ]
+            },
+            "CheckResult1": {
+              "Type": "Choice",
+              "Choices": [
+                {
+                  "Variable": "$.hasError",
+                  "BooleanEquals": true,
+                  "Next": "Wait30m"
+                }
+              ],
+              "Default": "Success"
+            },
+            "Wait30m": {
+              "Type": "Wait",
+              "Seconds": 1800,
+              "Next": "TryAgain1"
+            },
+            "TryAgain1": {
+              "Type": "Task",
+              "Resource": "${AppFunction.Arn}",
+              "Next": "CheckResult2",
+              "Catch": [
+                {
+                  "ErrorEquals": [
+                    "States.ALL"
+                  ],
+                  "Next": "Wait1h"
+                }
+              ]
+            },
+            "CheckResult2": {
+              "Type": "Choice",
+              "Choices": [
+                {
+                  "Variable": "$.hasError",
+                  "BooleanEquals": true,
+                  "Next": "Wait1h"
+                }
+              ],
+              "Default": "Success"
+            },
+            "Wait1h": {
+              "Type": "Wait",
+              "Seconds": 3600,
+              "Next": "TryAgain2"
+            },
+            "TryAgain2": {
+              "Type": "Task",
+              "Resource": "${AppFunction.Arn}",
+              "Next": "CheckResult3",
+              "Catch": [
+                {
+                  "ErrorEquals": [
+                    "States.ALL"
+                  ],
+                  "Next": "Wait1h30min"
+                }
+              ]
+            },
+            "CheckResult3": {
+              "Type": "Choice",
+              "Choices": [
+                {
+                  "Variable": "$.hasError",
+                  "BooleanEquals": true,
+                  "Next": "Wait1h30min"
+                }
+              ],
+              "Default": "Success"
+            },
+            "Wait1h30min": {
+              "Type": "Wait",
+              "Seconds": 5400,
+              "Next": "TryAgain3"
+            },
+            "TryAgain3": {
+              "Type": "Task",
+              "Resource": "${AppFunction.Arn}",
+              "Next": "CheckResult4",
+              "Catch": [
+                {
+                  "ErrorEquals": [
+                    "States.ALL"
+                  ],
+                  "Next": "Failed"
+                }
+              ]
+            },
+            "CheckResult4": {
+              "Type": "Choice",
+              "Choices": [
+                {
+                  "Variable": "$.hasError",
+                  "BooleanEquals": true,
+                  "Next": "Failed"
+                }
+              ],
+              "Default": "Success"
+            },
+            "Success": {
+              "Type": "Succeed"
+            },
+            "Failed": {
+              "Type": "Fail",
+              "Cause": "Todas as tentativas falharam"
+            }
+          }
+        }
+
+  SchedulerInvokeRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: scheduler.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: AllowStartExecution
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - states:StartExecution
+                Resource: !Ref MyStateMachine
+
+  ScheduledStateMachine:
+    Type: AWS::Scheduler::Schedule
+    Properties:
+      Name: !Ref EventRuleName
+      ScheduleExpression: !Ref EventScheduleExpression
+      ScheduleExpressionTimezone: "UTC"
+      StartDate: !Ref ScheduleStart
+      FlexibleTimeWindow:
+        Mode: "OFF"
+      Target:
+        Arn: !Ref MyStateMachine
+        RoleArn: !GetAtt SchedulerInvokeRole.Arn
+        Input: "{}"
+
+Parameters:
+  AdminChatId:
+    Type: String
+    Default: ""
+  ChatId:
+    Type: String
+    Default: ""
+  GoogleCredentials:
+    Type: String
+    Default: ""
+    NoEcho: true
+  GoogleSheetId:
+    Type: String
+    Default: ""
+  ProxyEnabled:
+    Type: String
+    Default: "false"
+  ProxyPassword:
+    Type: String
+    Default: ""
+    NoEcho: true
+  ProxyUser:
+    Type: String
+    Default: ""
+  Token:
+    Type: String
+    Default: ""
+    NoEcho: true
+  Agent:
+    Type: String
+    Default: ""
+
+Outputs:
+  LambdaArn:
+    Value: !GetAtt AppFunction.Arn
+  StateMachineArn:
+    Value: !Ref MyStateMachine
+  ScheduleArn:
+    Value: !Ref ScheduledStateMachine
