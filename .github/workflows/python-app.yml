@@ -106,11 +106,6 @@ jobs:
           echo "Próximo horário agendado (UTC-3): $NEXT_TIME_BRT"
           echo "Próximo horário convertido para UTC: $NEXT_TIME_UTC"
           echo "start=$NEXT_TIME_UTC" >> $GITHUB_OUTPUT
-      - name: Preparar GOOGLE_CREDENTIALS sem quebras de linha
-        id: prepare_credentials
-        run: |
-          CLEAN_CREDENTIALS=$(echo "${{ secrets.GOOGLE_CREDENTIALS }}" | tr -d '\n')
-          echo "clean_credentials=$CLEAN_CREDENTIALS" >> $GITHUB_OUTPUT
       - name: Deploy CloudFormation stack
         env:
           IMAGE_URI: ${{ steps.build_push.outputs.IMAGE_URI }}
@@ -132,7 +127,7 @@ jobs:
               SnapStart=None \
               AdminChatId=${{ secrets.ADMIN_CHAT_ID }} \
               ChatId=${{ secrets.CHAT_ID }} \
-              GOOGLE_CREDENTIALS=${{ steps.prepare_credentials.outputs.clean_credentials }} \
+              GOOGLE_CREDENTIALS=${{ secrets.GOOGLE_CREDENTIALS }} \
               GOOGLE_SHEET_ID=${{ secrets.GOOGLE_SHEET_ID }} \
               PROXY_ENABLED=${{ secrets.PROXY_ENABLED }} \
               PROXY_PASSWORD=${{ secrets.PROXY_PASSWORD }} \
