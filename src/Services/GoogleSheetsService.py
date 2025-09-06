@@ -9,6 +9,7 @@ from datetime import datetime, timezone
 from logging import Logger
 import os
 import json
+import base64
 import traceback
 
 class GoogleSheetsService:
@@ -22,7 +23,7 @@ class GoogleSheetsService:
 
     def __init__(self: Self, logger : Logger):
         self.logger = logger
-        self.credentials = os.getenv("GOOGLE_CREDENTIALS")
+        self.credentials = (base64.b64decode(os.getenv("GOOGLE_CREDENTIALS"))).decode('utf-8')
         self.sheetId = os.getenv("GOOGLE_SHEET_ID")
         self.credentials_dict = json.loads(self.credentials)
         self.serviceAccount = self.authenticate()

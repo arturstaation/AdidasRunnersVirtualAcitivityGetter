@@ -94,7 +94,7 @@ GOOGLE_SHEET_ID=sua_google_sheet_id
 - ADMIN_CHAT_ID: ID do chat para mensagens administrativas (logs, alertas). Caso não seja fornecido, não enviara as mensagens voltadas para administradores.
 - PROXY_ENABLED: Bool referente ao desejo de usar proxy. Caso não seja fornecdio sera interpretado como False e não usará no processamento
 - PROXY_USER / PROXY_PASSWORD: Credenciais do Proxy DataImpulse.
-- GOOGLE_CREDENTIALS: Conteúdo do JSON de credenciais da conta de serviço do Google (veja abaixo como gerar).
+- GOOGLE_CREDENTIALS: Conteúdo do JSON de credenciais da conta de serviço do Google (veja abaixo como gerar) em base64.
 - GOOGLE_SHEET_ID: ID da planilha do Google Sheets.
 
 Dicas:

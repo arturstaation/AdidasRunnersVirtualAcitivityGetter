@@ -2,7 +2,7 @@ import json
 import logging
 from datetime import datetime, timedelta, timezone
 from unittest.mock import patch, MagicMock
-
+import base64
 import pytest
 
 from Services.GoogleSheetsService import GoogleSheetsService
@@ -35,7 +35,7 @@ def _setup_sheet_with_tabs(fake_sa):
 @pytest.fixture(autouse=True)
 def _env(monkeypatch):
     fake_creds = {"type": "service_account", "project_id": "fake"}
-    monkeypatch.setenv("GOOGLE_CREDENTIALS", json.dumps(fake_creds))
+    monkeypatch.setenv("GOOGLE_CREDENTIALS", base64.b64encode(json.dumps(fake_creds).encode('utf-8')).decode('utf-8'))
     monkeypatch.setenv("GOOGLE_SHEET_ID", "fake-sheet-id")
     yield
     monkeypatch.delenv("GOOGLE_CREDENTIALS", raising=False)
