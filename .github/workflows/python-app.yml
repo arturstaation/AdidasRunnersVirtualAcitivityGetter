@@ -112,25 +112,25 @@ jobs:
             --stack-name adidasrunners-stack \
             --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
             --parameter-overrides \
-              ImageUri="$IMAGE_URI" \
-              LambdaName="adidasrunnersbot" \
-              StateMachineName="AdidasRunnersStateMachine" \
-              EventRuleName="AdidasRunnersSchedule" \
+              ImageUri=$IMAGE_URI \
+              LambdaName=adidasrunnersbot \
+              StateMachineName=AdidasRunnersStateMachine \
+              EventRuleName=AdidasRunnersSchedule \
               EventScheduleExpression="rate(6 hours)" \
-              ScheduleStart="${{ steps.schedule_time.outputs.start }}" \
+              ScheduleStart=${{ steps.schedule_time.outputs.start }} \
               MemorySize=1024 \
               EphemeralStorageSize=512 \
               Timeout=900 \
-              SnapStart="None" \
-              AdminChatId="${{ secrets.ADMIN_CHAT_ID }}" \
-              ChatId="${{ secrets.CHAT_ID }}" \
-              GOOGLE_CREDENTIALS="${{ secrets.GOOGLE_CREDENTIALS }}" \
-              GOOGLE_SHEET_ID="${{ secrets.GOOGLE_SHEET_ID }}" \
-              PROXY_ENABLED="${{ secrets.PROXY_ENABLED }}" \
-              PROXY_PASSWORD="${{ secrets.PROXY_PASSWORD }}" \
-              PROXY_USER="${{ secrets.PROXY_USER }}" \
-              TOKEN="${{ secrets.TOKEN }}" \
-              AGENT="${{ secrets.AGENT }}"
+              SnapStart=None \
+              AdminChatId=${{ secrets.ADMIN_CHAT_ID }} \
+              ChatId=${{ secrets.CHAT_ID }} \
+              GOOGLE_CREDENTIALS=${{ secrets.GOOGLE_CREDENTIALS }} \
+              GOOGLE_SHEET_ID=${{ secrets.GOOGLE_SHEET_ID }} \
+              PROXY_ENABLED=${{ secrets.PROXY_ENABLED }} \
+              PROXY_PASSWORD=${{ secrets.PROXY_PASSWORD }} \
+              PROXY_USER=${{ secrets.PROXY_USER }} \
+              TOKEN=${{ secrets.TOKEN }} \
+              AGENT=${{ secrets.AGENT }}
 
   send_email:
     runs-on: ubuntu-latest
