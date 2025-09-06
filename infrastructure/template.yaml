@@ -27,6 +27,36 @@ Parameters:
     Type: String
     Default: "None"
     AllowedValues: ["None", "PublishedVersions"]
+  AdminChatId:
+    Type: String
+    Default: ""
+  ChatId:
+    Type: String
+    Default: ""
+  GoogleCredentials:
+    Type: String
+    Default: ""
+    NoEcho: true
+  GoogleSheetId:
+    Type: String
+    Default: ""
+  ProxyEnabled:
+    Type: String
+    Default: "false"
+  ProxyPassword:
+    Type: String
+    Default: ""
+    NoEcho: true
+  ProxyUser:
+    Type: String
+    Default: ""
+  Token:
+    Type: String
+    Default: ""
+    NoEcho: true
+  Agent:
+    Type: String
+    Default: ""
 
 Resources:
   LambdaExecutionRole:
@@ -252,38 +282,6 @@ Resources:
         Arn: !Ref MyStateMachine
         RoleArn: !GetAtt SchedulerInvokeRole.Arn
         Input: "{}"
-
-Parameters:
-  AdminChatId:
-    Type: String
-    Default: ""
-  ChatId:
-    Type: String
-    Default: ""
-  GoogleCredentials:
-    Type: String
-    Default: ""
-    NoEcho: true
-  GoogleSheetId:
-    Type: String
-    Default: ""
-  ProxyEnabled:
-    Type: String
-    Default: "false"
-  ProxyPassword:
-    Type: String
-    Default: ""
-    NoEcho: true
-  ProxyUser:
-    Type: String
-    Default: ""
-  Token:
-    Type: String
-    Default: ""
-    NoEcho: true
-  Agent:
-    Type: String
-    Default: ""
 
 Outputs:
   LambdaArn:
