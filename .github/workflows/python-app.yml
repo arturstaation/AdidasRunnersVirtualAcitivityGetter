@@ -108,7 +108,7 @@ jobs:
           IMAGE_URI: ${{ steps.build_push.outputs.IMAGE_URI }}
         run: |
           aws cloudformation deploy \
-            --template-file infra/template.yaml \
+            --template-file infrastructure/template.yaml \
             --stack-name adidasrunners-stack \
             --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
             --parameter-overrides \
