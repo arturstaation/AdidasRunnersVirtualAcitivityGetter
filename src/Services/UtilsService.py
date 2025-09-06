@@ -29,7 +29,7 @@ class UtilsService:
         )
 
         env: Dict[str, Optional[str]] = {k: os.getenv(k) for k in set(requiredVars) | {
-            "ADMIN_CHAT_ID", "PROXY_USER", "PROXY_PASSWORD"
+            "ADMIN_CHAT_ID", "AGENT", "PROXY_USER", "PROXY_PASSWORD"
         }}
 
         for var in requiredVars:
@@ -41,6 +41,11 @@ class UtilsService:
         if not adminChatId or str(adminChatId).strip() == "":
             if getattr(self, "logger", None):
                 self.logger.warning("ADMIN_CHAT_ID (Chat de Administrador) não configurado")
+
+        agent = env.get("AGENT")
+        if not agent or str(agent).strip() == "":
+            if getattr(self, "logger", None):
+                self.logger.warning("AGENT não configurado, será usado o valor padrão configurado no serviço")
 
         proxyEnabled = self.strToBool(os.getenv("PROXY_ENABLED", "False"))
         if proxyEnabled:

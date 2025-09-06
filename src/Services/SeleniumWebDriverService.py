@@ -12,7 +12,7 @@ from .UtilsService import UtilsService
 from .ProxyService import ProxyService
 import traceback
 import os
-import sys
+from webdriver_manager.chrome import ChromeDriverManager
 from tempfile import mkdtemp
 
 class SeleniumWebDriverService:
@@ -21,12 +21,15 @@ class SeleniumWebDriverService:
     utilsService: UtilsService
     logger : Logger
     hasProxy: bool
+    service: Service
 
     def __init__(self: Self, logger : Logger, utilsService: UtilsService):
         self.logger = logger
         self.logger.info("Inicializando SeleniumWebDriver")
         self.utilsService = utilsService
         self.hasProxy=self.utilsService.strToBool(os.getenv('PROXY_ENABLED', "False"))
+        self.logger.info("Instalando ChromeDriver")
+        self.service = Service(ChromeDriverManager().install())
         self.getDriver()
 
     def getDriver(self: Self):
@@ -42,7 +45,7 @@ class SeleniumWebDriverService:
         options.add_argument("--process-per-site")
         options.add_argument(f"--user-data-dir={mkdtemp()}")
         options.add_argument(f"--disk-cache-dir={mkdtemp()}")
-        options.add_argument("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36")
+        options.add_argument(f'--user-agent={os.getenv("AGENT", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36")}')
 
         seleniumwireOptions = {}
         if(self.hasProxy):
@@ -60,12 +63,7 @@ class SeleniumWebDriverService:
                     "https": proxyUrl
                 }
             }
-
-        if sys.platform.startswith("win"):
-            service = Service(executable_path="../chromedriver.exe")
-        elif sys.platform.startswith("linux"):
-            service = Service(executable_path="../chromedriver")
-        self.driver = webdriver.Chrome(service=service ,options=options, seleniumwire_options=seleniumwireOptions)
+        self.driver = webdriver.Chrome(service=self.service ,options=options, seleniumwire_options=seleniumwireOptions)
 
     def restartDriver(self: Self):
         self.logger.warning("Reiniciando WebDriver")
@@ -112,4 +110,5 @@ class SeleniumWebDriverService:
     
     def stopDriver(self: Self):
         self.logger.info("Finalizando Driver")
-        self.driver.quit()
+        if(self.driver):
+            self.driver.quit()

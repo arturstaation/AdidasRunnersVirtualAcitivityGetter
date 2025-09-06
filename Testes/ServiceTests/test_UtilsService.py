@@ -78,6 +78,7 @@ def clean_env(monkeypatch):
         "TOKEN",
         "CHAT_ID",
         "ADMIN_CHAT_ID",
+        "AGENT",
         "PROXY_ENABLED",
         "PROXY_USER",
         "PROXY_PASSWORD",
@@ -143,6 +144,7 @@ def test_validateEnvVariables_all_required_present_proxy_disabled_warns_proxy(lo
 
     msgs = " | ".join(caplog.messages)
     assert "ADMIN_CHAT_ID (Chat de Administrador) não configurado" in msgs
+    assert "AGENT não configurado, será usado o valor padrão configurado no serviço" in msgs
     assert "Proxy desabilitado" in msgs
 
 def test_validateEnvVariables_missing_required_vars_raises(logger, caplog):
@@ -162,6 +164,7 @@ def test_validateEnvVariables_admin_chat_id_blank_warns(logger, monkeypatch, cap
     monkeypatch.setenv("CHAT_ID", "cid")
 
     monkeypatch.setenv("ADMIN_CHAT_ID", "   ")
+    monkeypatch.setenv("AGENT", "   ")
 
     monkeypatch.setenv("PROXY_ENABLED", "False")
 
@@ -169,6 +172,7 @@ def test_validateEnvVariables_admin_chat_id_blank_warns(logger, monkeypatch, cap
     with caplog.at_level(logging.WARNING):
         us.validateEnvVariables()
     assert any("ADMIN_CHAT_ID (Chat de Administrador) não configurado" in m for m in caplog.messages)
+    assert any("AGENT não configurado, será usado o valor padrão configurado no serviço" in m for m in caplog.messages)
     assert any("Proxy desabilitado" in m for m in caplog.messages)
 
 @pytest.mark.parametrize("flag", ["1", "true", "TRUE", "Yes", "on", " y "])
@@ -180,6 +184,7 @@ def test_validateEnvVariables_proxy_enabled_requires_user_and_password_missing_r
     monkeypatch.setenv("CHAT_ID", "cid")
 
     monkeypatch.setenv("ADMIN_CHAT_ID", "admin")
+    monkeypatch.setenv("AGENT", "agent")
 
     monkeypatch.setenv("PROXY_ENABLED", flag)
 
@@ -195,6 +200,7 @@ def test_validateEnvVariables_proxy_enabled_with_user_but_no_password_raises(log
     monkeypatch.setenv("TOKEN", "tk")
     monkeypatch.setenv("CHAT_ID", "cid")
     monkeypatch.setenv("ADMIN_CHAT_ID", "admin")
+    monkeypatch.setenv("AGENT", "agent")
     monkeypatch.setenv("PROXY_ENABLED", "true")
     monkeypatch.setenv("PROXY_USER", "userx")
 
@@ -211,6 +217,7 @@ def test_validateEnvVariables_proxy_enabled_with_password_but_no_user_raises(log
     monkeypatch.setenv("TOKEN", "tk")
     monkeypatch.setenv("CHAT_ID", "cid")
     monkeypatch.setenv("ADMIN_CHAT_ID", "admin")
+    monkeypatch.setenv("AGENT", "agent")
     monkeypatch.setenv("PROXY_ENABLED", "true")
     monkeypatch.setenv("PROXY_PASSWORD", "passx")
 
@@ -227,6 +234,7 @@ def test_validateEnvVariables_proxy_enabled_with_both_ok_passes(logger, monkeypa
     monkeypatch.setenv("TOKEN", "tk")
     monkeypatch.setenv("CHAT_ID", "cid")
     monkeypatch.setenv("ADMIN_CHAT_ID", "admin")
+    monkeypatch.setenv("AGENT", "agent")
     monkeypatch.setenv("PROXY_ENABLED", "true")
     monkeypatch.setenv("PROXY_USER", "userx")
     monkeypatch.setenv("PROXY_PASSWORD", "passx")

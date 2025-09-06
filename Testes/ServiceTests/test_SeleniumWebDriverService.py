@@ -44,15 +44,11 @@ def _patch_driver_stack(win_or_linux="win"):
     class FakeTimeoutException(Exception):
         pass
 
-    class FakeSys:
-        platform = "win32" if win_or_linux == "win" else "linux"
-
     patchers = [
         patch("Services.SeleniumWebDriverService.Options", options_mock_cls),
         patch("Services.SeleniumWebDriverService.Service", service_mock_cls),
         patch("Services.SeleniumWebDriverService.webdriver.Chrome", chrome_mock_cls),
         patch("Services.SeleniumWebDriverService.ProxyService", proxy_service_cls),
-        patch("Services.SeleniumWebDriverService.sys", FakeSys),
         patch("Services.SeleniumWebDriverService.TimeoutException", FakeTimeoutException),
     ]
 
@@ -65,47 +61,14 @@ def _patch_driver_stack(win_or_linux="win"):
         driver=driver_mock,
         proxy_cls=proxy_service_cls,
         proxy=proxy_service_inst,
-        TimeoutException=FakeTimeoutException,
-        sys=FakeSys,
+        TimeoutException=FakeTimeoutException
     )
     return patchers, mocks_ns
 
 
-def test_getDriver_windows_builds_chrome_with_proxy(logger):
-    patchers, m = _patch_driver_stack(win_or_linux="win")
-    with patchers[0], patchers[1], patchers[2], patchers[3], patchers[4], patchers[5]:
-        svc = SeleniumWebDriverService(logger=logger, utilsService=MagicMock())
-
-        m.service_cls.assert_called_once()
-        assert m.service_cls.call_args.kwargs.get("executable_path") == "../chromedriver.exe"
-
-        m.proxy_cls.assert_called_once()
-        m.proxy.getProxies.assert_called_once()
-
-        _, kwargs = m.chrome_cls.call_args
-        seleniumwire_options = kwargs.get("seleniumwire_options")
-        proxy_url = seleniumwire_options["proxy"]["http"]
-        assert proxy_url == "http://user:pass@1.2.3.4:8080"
-        assert seleniumwire_options["proxy"]["https"] == proxy_url
-
-        assert svc.driver is m.driver
-
-
-def test_getDriver_linux_builds_chrome_with_proxy(logger):
-    patchers, m = _patch_driver_stack(win_or_linux="linux")
-    with patchers[0], patchers[1], patchers[2], patchers[3], patchers[4], patchers[5]:
-        svc = SeleniumWebDriverService(logger=logger, utilsService=MagicMock())
-
-        m.service_cls.assert_called_once()
-        assert m.service_cls.call_args.kwargs.get("executable_path") == "../chromedriver"
-        m.proxy.getProxies.assert_called_once()
-        _, kwargs = m.chrome_cls.call_args
-        assert kwargs["seleniumwire_options"]["proxy"]["http"] == "http://user:pass@1.2.3.4:8080"
-
-
 def test_getJsonFromUrl_success_first_try(logger):
     patchers, m = _patch_driver_stack()
-    with patchers[0], patchers[1], patchers[2], patchers[3], patchers[4], patchers[5]:
+    with patchers[0], patchers[1], patchers[2], patchers[3], patchers[4]:
         svc = SeleniumWebDriverService(logger=logger, utilsService=MagicMock())
 
         pre = MagicMock()
@@ -121,7 +84,7 @@ def test_getJsonFromUrl_success_first_try(logger):
 
 def test_getJsonFromUrl_403_then_success(logger):
     patchers, m = _patch_driver_stack()
-    with patchers[0], patchers[1], patchers[2], patchers[3], patchers[4], patchers[5]:
+    with patchers[0], patchers[1], patchers[2], patchers[3], patchers[4]:
         svc = SeleniumWebDriverService(logger=logger, utilsService=MagicMock())
 
         m.driver.find_element.side_effect = [
@@ -138,7 +101,7 @@ def test_getJsonFromUrl_403_then_success(logger):
 
 def test_getJsonFromUrl_all_403_raises(logger):
     patchers, m = _patch_driver_stack()
-    with patchers[0], patchers[1], patchers[2], patchers[3], patchers[4], patchers[5]:
+    with patchers[0], patchers[1], patchers[2], patchers[3], patchers[4]:
         svc = SeleniumWebDriverService(logger=logger, utilsService=MagicMock())
 
         m.driver.find_element.side_effect = m.TimeoutException("again")
@@ -152,7 +115,7 @@ def test_getJsonFromUrl_all_403_raises(logger):
 
 def test_getJsonFromUrl_unexpected_error_then_success(logger):
     patchers, m = _patch_driver_stack()
-    with patchers[0], patchers[1], patchers[2], patchers[3], patchers[4], patchers[5]:
+    with patchers[0], patchers[1], patchers[2], patchers[3], patchers[4]:
         svc = SeleniumWebDriverService(logger=logger, utilsService=MagicMock())
 
         m.driver.get.side_effect = [Exception("network hiccup"), None]
@@ -186,7 +149,7 @@ def test_restartDriver_calls_stop_and_getDriver_even_if_stop_raises(logger):
 
 def test_getJsonFromUrl_page_load_timeout_then_success(logger):
     patchers, m = _patch_driver_stack()
-    with patchers[0], patchers[1], patchers[2], patchers[3], patchers[4], patchers[5]:
+    with patchers[0], patchers[1], patchers[2], patchers[3], patchers[4]:
         svc = SeleniumWebDriverService(logger=logger, utilsService=MagicMock())
 
         m.driver.get.side_effect = [m.TimeoutException("timeout on load"), None]
@@ -204,7 +167,7 @@ def test_getJsonFromUrl_page_load_timeout_then_success(logger):
 
 def test_getJsonFromUrl_unknown_error_on_pre_then_success(logger):
     patchers, m = _patch_driver_stack()
-    with patchers[0], patchers[1], patchers[2], patchers[3], patchers[4], patchers[5]:
+    with patchers[0], patchers[1], patchers[2], patchers[3], patchers[4]:
         svc = SeleniumWebDriverService(logger=logger, utilsService=MagicMock())
 
         m.driver.get.side_effect = [None, None]
@@ -229,7 +192,7 @@ def test_getDriver_with_proxy_builds_seleniumwire_options_and_calls_proxy(logger
     utils_mock = MagicMock()
     utils_mock.strToBool.return_value = True
 
-    with patchers[0], patchers[1], patchers[2], patchers[3], patchers[4], patchers[5]:
+    with patchers[0], patchers[1], patchers[2], patchers[3], patchers[4]:
         svc = SeleniumWebDriverService(logger=logger, utilsService=utils_mock)
 
         m.proxy_cls.assert_called_once_with(logger)

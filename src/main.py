@@ -68,7 +68,8 @@ def main():
         "message": "Ocorreu um erro durante o processamento"
     }
    finally:
-        seleniumWebDriverService.stopDriver()
+        if(seleniumWebDriverService is not None):
+            seleniumWebDriverService.stopDriver()
         logger.info("Processamento Finalizado")
         try:
             try:
