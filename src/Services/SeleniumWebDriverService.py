@@ -13,6 +13,7 @@ from .ProxyService import ProxyService
 import traceback
 import os
 from webdriver_manager.chrome import ChromeDriverManager
+from webdriver_manager.core.driver_cache import DriverCacheManager
 from tempfile import mkdtemp
 
 class SeleniumWebDriverService:
@@ -21,7 +22,7 @@ class SeleniumWebDriverService:
     utilsService: UtilsService
     logger : Logger
     hasProxy: bool
-    service: Service
+    driver_path: str
 
     def __init__(self: Self, logger : Logger, utilsService: UtilsService):
         self.logger = logger
@@ -29,7 +30,8 @@ class SeleniumWebDriverService:
         self.utilsService = utilsService
         self.hasProxy=self.utilsService.strToBool(os.getenv('PROXY_ENABLED', "False"))
         self.logger.info("Instalando ChromeDriver")
-        self.service = Service(ChromeDriverManager().install())
+        cache_manager = DriverCacheManager(root_dir=mkdtemp())
+        self.driver_path = ChromeDriverManager(cache_manager=cache_manager).install()
         self.getDriver()
 
     def getDriver(self: Self):
@@ -40,7 +42,7 @@ class SeleniumWebDriverService:
         options.add_argument("--disable-dev-shm-usage")
         options.add_argument("--disable-gpu")
         options.add_argument("--disable-dev-tools")
-        options.add_argument("--no-zygote")
+        options.add_argument("--no-zygote") 
         options.add_argument("--renderer-process-limit=1")   
         options.add_argument("--process-per-site")
         options.add_argument(f"--user-data-dir={mkdtemp()}")
@@ -63,7 +65,8 @@ class SeleniumWebDriverService:
                     "https": proxyUrl
                 }
             }
-        self.driver = webdriver.Chrome(service=self.service ,options=options, seleniumwire_options=seleniumwireOptions)
+        service = Service(self.driver_path)
+        self.driver = webdriver.Chrome(service=service ,options=options, seleniumwire_options=seleniumwireOptions)
 
     def restartDriver(self: Self):
         self.logger.warning("Reiniciando WebDriver")
