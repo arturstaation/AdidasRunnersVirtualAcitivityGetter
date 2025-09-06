@@ -77,32 +77,40 @@ jobs:
 
           echo "IMAGE_URI=$IMAGE_URI" >> $GITHUB_OUTPUT
 
-      - name: Calcular próximo horário fixo (00:00, 06:00, 12:00, 18:00 UTC)
+      - name: Calcular próximo horário fixo (00:00, 06:00, 12:00, 18:00) baseado em UTC-3 (Brasil)
         id: schedule_time
         run: |
-          NOW=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-          TODAY=$(date -u +"%Y-%m-%d")
-          TIMES=("00:00" "06:00" "12:00" "18:00")
-          NOW_TS=$(date -u -d "$NOW" +%s)
+          NOW_UTC=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          NOW_BRT_TS=$(date -u -d "$NOW_UTC -3 hours" +%s)
+          TODAY_BRT=$(date -u -d "$NOW_UTC -3 hours" +"%Y-%m-%d")
 
-          NEXT_TIME=""
+          TIMES=("00:00" "06:00" "12:00" "18:00")
+
+          NEXT_TIME_BRT=""
           for t in "${TIMES[@]}"; do
-            CANDIDATE="${TODAY}T${t}:00Z"
-            CANDIDATE_TS=$(date -u -d "$CANDIDATE" +%s)
-            if [ "$CANDIDATE_TS" -ge "$NOW_TS" ]; then
-              NEXT_TIME="$CANDIDATE"
+            CANDIDATE_BRT="${TODAY_BRT}T${t}:00"
+            CANDIDATE_BRT_TS=$(date -u -d "$CANDIDATE_BRT" +%s)
+            if [ "$CANDIDATE_BRT_TS" -ge "$NOW_BRT_TS" ]; then
+              NEXT_TIME_BRT="$CANDIDATE_BRT"
               break
             fi
           done
 
-          if [ -z "$NEXT_TIME" ]; then
-            TOMORROW=$(date -u -d "+1 day" +"%Y-%m-%d")
-            NEXT_TIME="${TOMORROW}T00:00:00Z"
+          if [ -z "$NEXT_TIME_BRT" ]; then
+            TOMORROW_BRT=$(date -u -d "$NOW_UTC -3 hours +1 day" +"%Y-%m-%d")
+            NEXT_TIME_BRT="${TOMORROW_BRT}T00:00:00"
           fi
 
-          echo "Próximo horário agendado: $NEXT_TIME"
-          echo "start=$NEXT_TIME" >> $GITHUB_OUTPUT
+          NEXT_TIME_UTC=$(date -u -d "$NEXT_TIME_BRT +3 hours" +"%Y-%m-%dT%H:%M:%SZ")
 
+          echo "Próximo horário agendado (UTC-3): $NEXT_TIME_BRT"
+          echo "Próximo horário convertido para UTC: $NEXT_TIME_UTC"
+          echo "start=$NEXT_TIME_UTC" >> $GITHUB_OUTPUT
+      - name: Preparar GOOGLE_CREDENTIALS sem quebras de linha
+        id: prepare_credentials
+        run: |
+          CLEAN_CREDENTIALS=$(echo "${{ secrets.GOOGLE_CREDENTIALS }}" | tr -d '\n')
+          echo "clean_credentials=$CLEAN_CREDENTIALS" >> $GITHUB_OUTPUT
       - name: Deploy CloudFormation stack
         env:
           IMAGE_URI: ${{ steps.build_push.outputs.IMAGE_URI }}
@@ -124,7 +132,7 @@ jobs:
               SnapStart=None \
               AdminChatId=${{ secrets.ADMIN_CHAT_ID }} \
               ChatId=${{ secrets.CHAT_ID }} \
-              GOOGLE_CREDENTIALS="$(echo $GOOGLE_CREDENTIALS | tr -d '\n')" \
+              GOOGLE_CREDENTIALS=${{ steps.prepare_credentials.outputs.clean_credentials }} \
               GOOGLE_SHEET_ID=${{ secrets.GOOGLE_SHEET_ID }} \
               PROXY_ENABLED=${{ secrets.PROXY_ENABLED }} \
               PROXY_PASSWORD=${{ secrets.PROXY_PASSWORD }} \
