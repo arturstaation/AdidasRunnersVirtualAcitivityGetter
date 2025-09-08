@@ -160,8 +160,8 @@ jobs:
                 EphemeralStorageSize="512" \
                 Timeout="900" \
                 SnapStart="None" \
-                AdminChatId="${{ secrets.ADMIN_CHAT_ID }}" \
-                ChatId="${{ secrets.CHAT_ID }}" \
+                ADMIN_CHAT_ID="${{ secrets.ADMIN_CHAT_ID }}" \
+                CHAT_ID="${{ secrets.CHAT_ID }}" \
                 GOOGLE_CREDENTIALS="${{ secrets.GOOGLE_CREDENTIALS }}" \
                 GOOGLE_SHEET_ID="${{ secrets.GOOGLE_SHEET_ID }}" \
                 PROXY_ENABLED="${{ secrets.PROXY_ENABLED }}" \

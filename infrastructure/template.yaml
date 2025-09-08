@@ -27,34 +27,34 @@ Parameters:
     Type: String
     Default: "None"
     AllowedValues: ["None", "PublishedVersions"]
-  AdminChatId:
+  ADMIN_CHAT_ID:
     Type: String
     Default: ""
-  ChatId:
+  CHAT_ID:
     Type: String
     Default: ""
-  GoogleCredentials:
+  GOOGLE_CREDENTIALS:
     Type: String
     Default: ""
     NoEcho: true
-  GoogleSheetId:
+  GOOGLE_SHEET_ID:
     Type: String
     Default: ""
-  ProxyEnabled:
+  PROXY_ENABLED:
     Type: String
     Default: "false"
-  ProxyPassword:
+  PROXY_PASSWORD:
     Type: String
     Default: ""
     NoEcho: true
-  ProxyUser:
+  PROXY_USER:
     Type: String
     Default: ""
-  Token:
+  TOKEN:
     Type: String
     Default: ""
     NoEcho: true
-  Agent:
+  AGENT:
     Type: String
     Default: ""
 
@@ -88,15 +88,15 @@ Resources:
         ApplyOn: !Ref SnapStart
       Environment:
         Variables:
-          ADMIN_CHAT_ID: !Ref AdminChatId
-          CHAT_ID: !Ref ChatId
-          GOOGLE_CREDENTIALS: !Ref GoogleCredentials
-          GOOGLE_SHEET_ID: !Ref GoogleSheetId
-          PROXY_ENABLED: !Ref ProxyEnabled
-          PROXY_PASSWORD: !Ref ProxyPassword
-          PROXY_USER: !Ref ProxyUser
-          TOKEN: !Ref Token
-          AGENT: !Ref Agent
+          ADMIN_CHAT_ID: !Ref ADMIN_CHAT_ID
+          CHAT_ID: !Ref CHAT_ID
+          GOOGLE_CREDENTIALS: !Ref GOOGLE_CREDENTIALS
+          GOOGLE_SHEET_ID: !Ref GOOGLE_SHEET_ID
+          PROXY_ENABLED: !Ref PROXY_ENABLED
+          PROXY_PASSWORD: !Ref PROXY_PASSWORD
+          PROXY_USER: !Ref PROXY_USER
+          TOKEN: !Ref TOKEN
+          AGENT: !Ref AGENT
 
   StepFunctionsExecutionRole:
     Type: AWS::IAM::Role
