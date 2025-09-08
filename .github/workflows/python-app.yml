@@ -101,7 +101,8 @@ jobs:
               NEXT_TIME_BRT="${TOMORROW_BRT}T00:00:00"
             fi
 
-            NEXT_TIME_UTC=$(date -u -d "$NEXT_TIME_BRT +3 hours" +"%Y-%m-%dT%H:%M:%SZ")
+            # 🔧 Corrigido -> adiciona .000Z no final
+            NEXT_TIME_UTC=$(date -u -d "$NEXT_TIME_BRT +3 hours" +"%Y-%m-%dT%H:%M:%S.000Z")
 
             echo "Próximo horário agendado (UTC-3): $NEXT_TIME_BRT"
             echo "Próximo horário convertido para UTC: $NEXT_TIME_UTC"
