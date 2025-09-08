@@ -80,42 +80,35 @@ jobs:
         - name: Calcular próximo horário fixo (00:00, 06:00, 12:00, 18:00) baseado em UTC-3 (Brasil)
           id: schedule_time
           run: |
-            # Pega o momento atual em UTC
+            
             NOW_UTC=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
             NOW_UTC_TS=$(date -u +%s)
 
-            # Converte para BRT (UTC-3) para trabalhar com os horários locais
-            NOW_BRT_TS=$((NOW_UTC_TS - 10800))  # 10800s = 3h
+            NOW_BRT_TS=$((NOW_UTC_TS - 10800))
             TODAY_BRT=$(date -u -d "@$NOW_BRT_TS" +"%Y-%m-%d")
 
-            # Horários fixos em BRT
             TIMES=("00:00" "06:00" "12:00" "18:00")
 
             NEXT_TIME_BRT=""
             for t in "${TIMES[@]}"; do
-              # Monta o horário candidato em BRT
               CANDIDATE_BRT="${TODAY_BRT}T${t}:00"
               CANDIDATE_BRT_TS=$(date -u -d "$CANDIDATE_BRT" +%s)
               
-              # Converte para UTC (adiciona 3h = 10800s)
               CANDIDATE_UTC_TS=$((CANDIDATE_BRT_TS + 10800))
               
-              # Verifica se está pelo menos 10min no futuro (em UTC)
               if [ "$CANDIDATE_UTC_TS" -gt $((NOW_UTC_TS + 600)) ]; then
                 NEXT_TIME_BRT="$CANDIDATE_BRT"
                 break
               fi
             done
 
-            # Se não encontrou hoje, pega 00:00 de amanhã
             if [ -z "$NEXT_TIME_BRT" ]; then
               TOMORROW_BRT=$(date -u -d "$TODAY_BRT +1 day" +"%Y-%m-%d")
               NEXT_TIME_BRT="${TOMORROW_BRT}T00:00:00"
             fi
 
-            # Converte o horário final para UTC no formato correto
             NEXT_TIME_BRT_TS=$(date -u -d "$NEXT_TIME_BRT" +%s)
-            NEXT_TIME_UTC_TS=$((NEXT_TIME_BRT_TS + 10800))  # +3h para UTC
+            NEXT_TIME_UTC_TS=$((NEXT_TIME_BRT_TS + 10800))  
             NEXT_TIME_UTC=$(date -u -d "@$NEXT_TIME_UTC_TS" +"%Y-%m-%dT%H:%M:%S.000Z")
 
             echo "Próximo horário agendado (BRT/UTC-3): $NEXT_TIME_BRT"

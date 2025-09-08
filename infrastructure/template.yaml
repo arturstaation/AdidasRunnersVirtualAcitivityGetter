@@ -22,7 +22,7 @@ Parameters:
     Default: 512
   Timeout:
     Type: Number
-    Default: 900  # 15 minutos
+    Default: 900
   SnapStart:
     Type: String
     Default: "None"
