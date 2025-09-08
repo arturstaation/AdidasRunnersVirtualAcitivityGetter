@@ -43,106 +43,125 @@ jobs:
         echo "Line coverage: $coverage" >> $GITHUB_STEP_SUMMARY
 
   deploy_aws:
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - uses: actions/checkout@v4
+      runs-on: ubuntu-latest
+      needs: build
+      steps:
+        - uses: actions/checkout@v4
 
-      - name: Configure AWS
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: sa-east-1
+        - name: Configure AWS
+          uses: aws-actions/configure-aws-credentials@v2
+          with:
+            aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+            aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            aws-region: sa-east-1
 
-      - name: Login ECR
-        id: ecr
-        uses: aws-actions/amazon-ecr-login@v1
+        - name: Login ECR
+          id: ecr
+          uses: aws-actions/amazon-ecr-login@v1
 
-      - name: Set image tag
-        id: vars
-        run: |
-          echo "IMAGE_TAG=${GITHUB_SHA::8}" >> $GITHUB_OUTPUT
+        - name: Set image tag
+          id: vars
+          run: |
+            echo "IMAGE_TAG=${GITHUB_SHA::8}" >> $GITHUB_OUTPUT
 
-      - name: Build & Push ECR
-        id: build_push
-        run: |
-          ECR_REGISTRY=${{ steps.ecr.outputs.registry }}
-          ECR_REPOSITORY=adidasrunners
-          IMAGE_TAG=${{ steps.vars.outputs.IMAGE_TAG }}
-          IMAGE_URI="${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}"
+        - name: Build & Push ECR
+          id: build_push
+          run: |
+            ECR_REGISTRY=${{ steps.ecr.outputs.registry }}
+            ECR_REPOSITORY=adidasrunners
+            IMAGE_TAG=${{ steps.vars.outputs.IMAGE_TAG }}
+            IMAGE_URI="${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}"
 
-          docker build . -t "$IMAGE_URI"
-          docker push "$IMAGE_URI"
+            docker build . -t "$IMAGE_URI"
+            docker push "$IMAGE_URI"
 
-          echo "IMAGE_URI=$IMAGE_URI" >> $GITHUB_OUTPUT
+            echo "IMAGE_URI=$IMAGE_URI" >> $GITHUB_OUTPUT
 
-      - name: Calcular próximo horário fixo (00:00, 06:00, 12:00, 18:00) baseado em UTC-3 (Brasil)
-        id: schedule_time
-        run: |
-          NOW_UTC=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-          NOW_BRT_TS=$(date -u -d "$NOW_UTC -3 hours" +%s)
-          TODAY_BRT=$(date -u -d "$NOW_UTC -3 hours" +"%Y-%m-%d")
+        - name: Calcular próximo horário fixo (00:00, 06:00, 12:00, 18:00) baseado em UTC-3 (Brasil)
+          id: schedule_time
+          run: |
+            NOW_UTC=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+            NOW_BRT_TS=$(date -u -d "$NOW_UTC -3 hours" +%s)
+            TODAY_BRT=$(date -u -d "$NOW_UTC -3 hours" +"%Y-%m-%d")
 
-          TIMES=("00:00" "06:00" "12:00" "18:00")
+            TIMES=("00:00" "06:00" "12:00" "18:00")
 
-          NEXT_TIME_BRT=""
-          for t in "${TIMES[@]}"; do
-            CANDIDATE_BRT="${TODAY_BRT}T${t}:00"
-            CANDIDATE_BRT_TS=$(date -u -d "$CANDIDATE_BRT" +%s)
-            if [ "$CANDIDATE_BRT_TS" -ge "$NOW_BRT_TS" ]; then
-              NEXT_TIME_BRT="$CANDIDATE_BRT"
-              break
+            NEXT_TIME_BRT=""
+            for t in "${TIMES[@]}"; do
+              CANDIDATE_BRT="${TODAY_BRT}T${t}:00"
+              CANDIDATE_BRT_TS=$(date -u -d "$CANDIDATE_BRT" +%s)
+              if [ "$CANDIDATE_BRT_TS" -ge "$NOW_BRT_TS" ]; then
+                NEXT_TIME_BRT="$CANDIDATE_BRT"
+                break
+              fi
+            done
+
+            if [ -z "$NEXT_TIME_BRT" ]; then
+              TOMORROW_BRT=$(date -u -d "$NOW_UTC -3 hours +1 day" +"%Y-%m-%d")
+              NEXT_TIME_BRT="${TOMORROW_BRT}T00:00:00"
             fi
-          done
 
-          if [ -z "$NEXT_TIME_BRT" ]; then
-            TOMORROW_BRT=$(date -u -d "$NOW_UTC -3 hours +1 day" +"%Y-%m-%d")
-            NEXT_TIME_BRT="${TOMORROW_BRT}T00:00:00"
-          fi
+            NEXT_TIME_UTC=$(date -u -d "$NEXT_TIME_BRT +3 hours" +"%Y-%m-%dT%H:%M:%SZ")
 
-          NEXT_TIME_UTC=$(date -u -d "$NEXT_TIME_BRT +3 hours" +"%Y-%m-%dT%H:%M:%SZ")
+            echo "Próximo horário agendado (UTC-3): $NEXT_TIME_BRT"
+            echo "Próximo horário convertido para UTC: $NEXT_TIME_UTC"
+            echo "start=$NEXT_TIME_UTC" >> $GITHUB_OUTPUT
 
-          echo "Próximo horário agendado (UTC-3): $NEXT_TIME_BRT"
-          echo "Próximo horário convertido para UTC: $NEXT_TIME_UTC"
-          echo "start=$NEXT_TIME_UTC" >> $GITHUB_OUTPUT
-      - name: Deploy CloudFormation stack
-        env:
-          IMAGE_URI: ${{ steps.build_push.outputs.IMAGE_URI }}
-        run: |
-          aws cloudformation deploy \
-            --template-file infrastructure/template.yaml \
-            --stack-name adidasrunners-stack \
-            --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
-            --no-fail-on-empty-changeset \
-            --parameter-overrides \
-              ImageUri="$IMAGE_URI" \
-              LambdaName="adidasrunnersbot" \
-              StateMachineName="AdidasRunnersStateMachine" \
-              EventRuleName="AdidasRunnersSchedule" \
-              EventScheduleExpression="rate(6 hours)" \
-              ScheduleStart="${{ steps.schedule_time.outputs.start }}" \
-              MemorySize="1024" \
-              EphemeralStorageSize="512" \
-              Timeout="900" \
-              SnapStart="None" \
-              AdminChatId="${{ secrets.ADMIN_CHAT_ID }}" \
-              ChatId="${{ secrets.CHAT_ID }}" \
-              GOOGLE_CREDENTIALS="${{ secrets.GOOGLE_CREDENTIALS }}" \
-              GOOGLE_SHEET_ID="${{ secrets.GOOGLE_SHEET_ID }}" \
-              PROXY_ENABLED="${{ secrets.PROXY_ENABLED }}" \
-              PROXY_PASSWORD="${{ secrets.PROXY_PASSWORD }}" \
-              PROXY_USER="${{ secrets.PROXY_USER }}" \
-              TOKEN="${{ secrets.TOKEN }}" \
-              AGENT="${{ secrets.AGENT }}" || {
-            echo "Deploy falhou. Buscando eventos da stack..."
-            aws cloudformation describe-stack-events \
+        - name: Garantir que stack não está em ROLLBACK_COMPLETE
+          run: |
+            set -e
+            STACK_NAME="adidasrunners-stack"
+            status=$(aws cloudformation describe-stacks \
+              --stack-name "$STACK_NAME" \
+              --query "Stacks[0].StackStatus" \
+              --output text 2>/dev/null || echo "NO_STACK")
+
+            echo "Status atual da stack: $status"
+
+            if [ "$status" = "ROLLBACK_COMPLETE" ]; then
+              echo "Stack em ROLLBACK_COMPLETE, deletando..."
+              aws cloudformation delete-stack --stack-name "$STACK_NAME"
+              aws cloudformation wait stack-delete-complete --stack-name "$STACK_NAME"
+              echo "Stack deletada. 🚀"
+            fi
+
+        - name: Deploy CloudFormation stack
+          env:
+            IMAGE_URI: ${{ steps.build_push.outputs.IMAGE_URI }}
+          run: |
+            aws cloudformation deploy \
+              --template-file infrastructure/template.yaml \
               --stack-name adidasrunners-stack \
-              --max-items 20 \
-              --query 'StackEvents[?ResourceStatus==`CREATE_FAILED` || ResourceStatus==`UPDATE_FAILED`].[Timestamp,ResourceType,LogicalResourceId,ResourceStatus,ResourceStatusReason]' \
-              --output table
-            exit 1
-          }
+              --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
+              --no-fail-on-empty-changeset \
+              --parameter-overrides \
+                ImageUri="$IMAGE_URI" \
+                LambdaName="adidasrunnersbot" \
+                StateMachineName="AdidasRunnersStateMachine" \
+                EventRuleName="AdidasRunnersSchedule" \
+                EventScheduleExpression="rate(6 hours)" \
+                ScheduleStart="${{ steps.schedule_time.outputs.start }}" \
+                MemorySize="1024" \
+                EphemeralStorageSize="512" \
+                Timeout="900" \
+                SnapStart="None" \
+                AdminChatId="${{ secrets.ADMIN_CHAT_ID }}" \
+                ChatId="${{ secrets.CHAT_ID }}" \
+                GOOGLE_CREDENTIALS="${{ secrets.GOOGLE_CREDENTIALS }}" \
+                GOOGLE_SHEET_ID="${{ secrets.GOOGLE_SHEET_ID }}" \
+                PROXY_ENABLED="${{ secrets.PROXY_ENABLED }}" \
+                PROXY_PASSWORD="${{ secrets.PROXY_PASSWORD }}" \
+                PROXY_USER="${{ secrets.PROXY_USER }}" \
+                TOKEN="${{ secrets.TOKEN }}" \
+                AGENT="${{ secrets.AGENT }}" || {
+              echo "Deploy falhou. Buscando eventos da stack..."
+              aws cloudformation describe-stack-events \
+                --stack-name adidasrunners-stack \
+                --max-items 20 \
+                --query 'StackEvents[?ResourceStatus==`CREATE_FAILED` || ResourceStatus==`UPDATE_FAILED`].[Timestamp,ResourceType,LogicalResourceId,ResourceStatus,ResourceStatusReason]' \
+                --output table
+              exit 1
+            }
 
   send_email:
     runs-on: ubuntu-latest
