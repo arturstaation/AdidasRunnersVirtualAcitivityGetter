@@ -28,7 +28,7 @@ class UtilsService:
         )
 
         env: Dict[str, Optional[str]] = {k: os.getenv(k) for k in set(requiredVars) | {
-            "ADMIN_CHAT_ID", "AGENT", "PROXY_USER", "PROXY_PASSWORD"
+            "ADMIN_CHAT_ID", "AGENT", "PROXY_USER", "PROXY_PASSWORD", "PROXY_LINK", "PROXY_PORT"
         }}
 
         for var in requiredVars:

@@ -165,3 +165,26 @@ def test_getProxies_raises_on_network_error(p_get, logger):
         svc.getProxies()
 
     assert "Erro ao obter dados do proxy" in str(exc.value)
+
+@patch("Services.ProxyService.ProxyModel")
+def test_getNewProxy_creates_proxy_model_with_correct_args(p_model, logger, caplog):
+    svc = ProxyService(logger=logger)
+    svc.proxyLink = "linkX"
+    svc.proxyPort = "9090"
+    svc.proxyUser = "userZ"
+    svc.proxyPassword = "passZ"
+
+    fake_proxy = MagicMock()
+    p_model.return_value = fake_proxy
+
+    with caplog.at_level(logging.INFO):
+        svc.getNewProxy()
+
+    p_model.assert_called_once_with(
+        pAddress="linkX",
+        pPort="9090",
+        pUser="userZ",
+        pPassword="passZ"
+    )
+    assert svc.proxySettings == fake_proxy
+    assert any("Obtendo Proxy" in m for m in caplog.messages)
