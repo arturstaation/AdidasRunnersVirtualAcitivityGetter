@@ -52,7 +52,7 @@ class SeleniumWebDriverService:
         seleniumwireOptions = {}
         if(self.hasProxy):
             proxyService = ProxyService(self.logger)
-            proxyService.getProxies()
+            proxyService.getNewProxy()
 
             self.logger.info("Gerando Proxy")
             proxySettings = proxyService.getProxySettings()

@@ -53,17 +53,6 @@ def test_formatDate_invalid_input_raises(logger):
     with pytest.raises(ValueError):
         svc.formatDate("invalid-date")
 
-
-def test_formatDate_logs_message(monkeypatch):
-    fake_logger = MagicMock()
-    svc = UtilsService(logger=fake_logger)
-    iso = "2025-01-02T03:04:05Z"
-    _ = svc.formatDate(iso)
-    fake_logger.info.assert_called_once()
-    called_msg = fake_logger.info.call_args.args[0]
-    assert "Formatando Data" in called_msg
-    assert iso in called_msg
-
 @pytest.fixture
 def logger():
     lg = logging.getLogger("UtilsServiceTest")
@@ -80,6 +69,8 @@ def clean_env(monkeypatch):
         "ADMIN_CHAT_ID",
         "AGENT",
         "PROXY_ENABLED",
+        "PROXY_LINK",
+        "PROXY_PORT",
         "PROXY_USER",
         "PROXY_PASSWORD",
     ]
@@ -103,7 +94,6 @@ def test_formatDate_formats_correctly(logger, input_iso, expected, caplog):
     with caplog.at_level(logging.INFO):
         out = us.formatDate(input_iso)
     assert out == expected
-    assert any(f"Formatando Data {input_iso}" in m for m in caplog.messages)
 
 
 @pytest.mark.parametrize(
@@ -236,6 +226,8 @@ def test_validateEnvVariables_proxy_enabled_with_both_ok_passes(logger, monkeypa
     monkeypatch.setenv("ADMIN_CHAT_ID", "admin")
     monkeypatch.setenv("AGENT", "agent")
     monkeypatch.setenv("PROXY_ENABLED", "true")
+    monkeypatch.setenv("PROXY_LINK", "link")
+    monkeypatch.setenv("PROXY_PORT", "port")
     monkeypatch.setenv("PROXY_USER", "userx")
     monkeypatch.setenv("PROXY_PASSWORD", "passx")
 

@@ -196,7 +196,7 @@ def test_getDriver_with_proxy_builds_seleniumwire_options_and_calls_proxy(logger
         svc = SeleniumWebDriverService(logger=logger, utilsService=utils_mock)
 
         m.proxy_cls.assert_called_once_with(logger)
-        m.proxy.getProxies.assert_called_once()
+        m.proxy.getNewProxy.assert_called_once()
         m.proxy.getProxySettings.assert_called_once()
 
         _, kwargs = m.chrome_cls.call_args

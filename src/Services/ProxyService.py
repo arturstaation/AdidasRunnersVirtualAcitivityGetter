@@ -7,13 +7,16 @@ from logging import Logger
 import traceback
 
 class ProxyService:
-
+    proxyLink: str
+    proxyPort: str
     proxyUser : str
     proxyPassword : str
     proxySettings : ProxyModel
     logger : Logger
 
     def __init__(self: Self, logger : Logger):
+        self.proxyLink = os.getenv("PROXY_LINK")
+        self.proxyPort = os.getenv("PROXY_PORT")
         self.proxyUser = os.getenv("PROXY_USER")
         self.proxyPassword = os.getenv("PROXY_PASSWORD")
         self.proxySettings = None
@@ -26,9 +29,9 @@ class ProxyService:
             proxyPort = proxySettings.proxyPort if proxySettings is not None else '10000'
             
             self.logger.info(f"Rotacionando IP do Proxy de Porta {proxyPort}")
-            requests.get(f"https://{self.proxyUser}:{self.proxyPassword}@gw.dataimpulse.com:777/api/rotate_ip?port={proxyPort}")
+            requests.get(f"https://{self.proxyUser}:{self.proxyPassword}@{self.proxyLink}:{self.proxyPort}/api/rotate_ip?port={proxyPort}")
             self.logger.info("Chamando a API para pegar obter o Proxy")
-            response = requests.get(f"https://{self.proxyUser}:{self.proxyPassword}@gw.dataimpulse.com:777/api/list?format=hostname:port:login:password&quantity={int(quantidade)}&type=sticky&protocol=http&countries=br")
+            response = requests.get(f"https://{self.proxyUser}:{self.proxyPassword}@{self.proxyLink}:{self.proxyPort}/api/list?format=hostname:port:login:password&quantity={int(quantidade)}&type=sticky&protocol=http&countries=br")
             proxy_data = response.text.split('\n')
             for proxy_str in proxy_data:
                 self.logger.info(f"Extraindo Proxy da Request: {proxy_str}")
@@ -50,3 +53,7 @@ class ProxyService:
         
     def getProxySettings(self: Self):
         return self.proxySettings if self.proxySettings is not None else None
+    
+    def getNewProxy(self: Self):
+        self.logger.info("Obtendo Proxy")
+        self.proxySettings = ProxyModel(pAddress=self.proxyLink, pPort=self.proxyPort, pPassword=self.proxyPassword, pUser=self.proxyUser)

@@ -40,6 +40,12 @@ Parameters:
   GoogleSheetId:
     Type: String
     Default: ""
+  ProxyLink:
+    Type: String
+    Default: "false"
+  ProxyPort:
+    Type: String
+    Default: "false"
   ProxyEnabled:
     Type: String
     Default: "false"
@@ -92,6 +98,8 @@ Resources:
           CHAT_ID: !Ref ChatId
           GOOGLE_CREDENTIALS: !Ref GoogleCredentials
           GOOGLE_SHEET_ID: !Ref GoogleSheetId
+          PROXY_LINK: !Ref ProxyLink
+          PROXY_PORT: !Ref ProxyPort
           PROXY_ENABLED: !Ref ProxyEnabled
           PROXY_PASSWORD: !Ref ProxyPassword
           PROXY_USER: !Ref ProxyUser

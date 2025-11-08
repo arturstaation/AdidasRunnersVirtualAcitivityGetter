@@ -157,6 +157,8 @@ jobs:
                 ChatId="${{ secrets.CHAT_ID }}" \
                 GoogleCredentials="${{ secrets.GOOGLE_CREDENTIALS }}" \
                 GoogleSheetId="${{ secrets.GOOGLE_SHEET_ID }}" \
+                ProxyLink="${{ secrets.PROXY_LINK }}" \
+                ProxyPort="${{ secrets.PROXY_PORT }}" \
                 ProxyEnabled="${{ secrets.PROXY_ENABLED }}" \
                 ProxyPassword="${{ secrets.PROXY_PASSWORD }}" \
                 ProxyUser="${{ secrets.PROXY_USER }}" \

@@ -11,7 +11,6 @@ class UtilsService:
         self.logger = logger
     
     def formatDate(self: Self, data_iso: str) -> str:
-        self.logger.info(f"Formatando Data {data_iso}")
         dt = datetime.fromisoformat(data_iso.replace("Z", "+00:00"))
         return dt.strftime("%d/%m/%Y às %H:%M")
     
@@ -53,6 +52,10 @@ class UtilsService:
                 missing.append("PROXY_USER")
             if not env.get("PROXY_PASSWORD") or str(env.get("PROXY_PASSWORD")).strip() == "":
                 missing.append("PROXY_PASSWORD")
+            if not env.get("PROXY_LINK") or str(env.get("PROXY_LINK")).strip() == "":
+                missing.append("PROXY_LINK")
+            if not env.get("PROXY_PORT") or str(env.get("PROXY_PORT")).strip() == "":
+                missing.append("PROXY_PORT")
         else:
             
             self.logger.warning("Proxy desabilitado")
