@@ -17,8 +17,9 @@ proxy_enabled: "false"
 proxy_link: ""
 proxy_port: ""
 
-# Agendamento do systemd timer.
-schedule_oncalendar: "*-*-* 00,06,12,18:00:00"
+# Agendamento do systemd timer — 00/06/12/18 no horário de Brasília
+# (o fuso no OnCalendar é suportado pelo systemd da OL9; independe do TZ da VM, que é UTC).
+schedule_oncalendar: "*-*-* 00,06,12,18:00:00 America/Sao_Paulo"
 
 # -e run_now=true executa o bot uma vez ao fim do playbook (validação/cutover).
 run_now: false
