@@ -11,3 +11,7 @@ vault_pg_password: "__GERAR__"           # senha do Postgres dedicado (adidas-db
 vault_telegram_token: "__BOT_TOKEN__"    # BotFather
 vault_chat_id: "__CHAT_ID__"             # chat de destino
 vault_admin_chat_id: "__ADMIN_CHAT_ID__" # chat de alertas/admin
+
+# Proxy — SÓ se proxy_enabled=true em all.yml. Deixe vazio/omita se não usar.
+vault_proxy_user: ""
+vault_proxy_password: ""
