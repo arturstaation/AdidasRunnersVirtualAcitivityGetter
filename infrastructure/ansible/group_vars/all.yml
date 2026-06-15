@@ -11,11 +11,11 @@ pg_db: "adidas_runners"
 # User-agent custom do scraping (opcional; vazio = usa o default do app).
 agent: ""
 
-# Proxy (selenium-wire é frágil em ARM — deixe false a menos que precise).
-# Link/porta aqui (não-secret); usuário/senha vão no vault (vault_proxy_*).
-proxy_enabled: "false"
-proxy_link: ""
-proxy_port: ""
+# Proxy IPRoyal (selenium-wire). Host/porta aqui (não-secret);
+# usuário/senha ficam no vault (vault_proxy_user / vault_proxy_password).
+proxy_enabled: "true"
+proxy_link: "geo.iproyal.com"
+proxy_port: "12321"
 
 # Agendamento do systemd timer — 00/06/12/18 no horário de Brasília
 # (o fuso no OnCalendar é suportado pelo systemd da OL9; independe do TZ da VM, que é UTC).
