@@ -64,7 +64,12 @@ jobs:
           script: |
             set -e
             cd ~/AdidasRunnersVirtualAcitivityGetter
-            git pull --rebase --autostash
+            # Deploy determinístico: força o clone a bater com origin/main, ignorando
+            # qualquer edição local (config vive no repo; o vault é untracked e o
+            # reset --hard NÃO toca arquivos untracked).
+            git fetch origin
+            git reset --hard origin/main
+            git stash clear 2>/dev/null || true
             cd infrastructure/ansible
             ansible-galaxy collection install community.docker ansible.posix >/dev/null 2>&1 || true
             printf '%s' "$VAULT_PASS" > /tmp/adidas_vault_pass
