@@ -40,38 +40,36 @@ jobs:
         echo "## Coverage Report" >> $GITHUB_STEP_SUMMARY
         echo "Line coverage: $coverage" >> $GITHUB_STEP_SUMMARY
 
-  # Deploy ISOLADO na VM via SSH (secrets próprios do repo). O build arm64 acontece
-  # NA VM (nativo, sem QEMU) → pipe rápida. Não usa k3s/Argo/registry/runner da Florae.
-  # O .env (segredos) vive só na VM; o CI só envia o código e dispara o build+run.
+  # Deploy ISOLADO na VM via Ansible por SSH (secrets próprios do repo). Reusa o clone
+  # e o vault já existentes na VM; só atualiza o stack + systemd timer — NÃO roda o bot
+  # (o timer cuida dos ciclos de 6h), então fica verde mesmo se um run fosse falhar.
+  # Não usa k3s/Argo/registry/runner da Florae.
+  # Secrets: VM_SSH_HOST/USER/KEY (+ PORT opc.) e VAULT_PASSWORD (senha do vault).
   deploy:
     runs-on: ubuntu-latest
     needs: build
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Enviar código para a VM (sem segredos)
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.VM_SSH_HOST }}
-          username: ${{ secrets.VM_SSH_USER }}
-          key: ${{ secrets.VM_SSH_KEY }}
-          port: ${{ secrets.VM_SSH_PORT || 22 }}
-          source: "Dockerfile,requirements.txt,src/,infrastructure/host/"
-          target: "~/adidas-runners"
-          overwrite: true
-
-      - name: Build + deploy + run na VM
+      - name: Ansible deploy na VM
         uses: appleboy/ssh-action@v1.2.0
+        env:
+          VAULT_PASS: ${{ secrets.VAULT_PASSWORD }}
         with:
           host: ${{ secrets.VM_SSH_HOST }}
           username: ${{ secrets.VM_SSH_USER }}
           key: ${{ secrets.VM_SSH_KEY }}
           port: ${{ secrets.VM_SSH_PORT || 22 }}
-          command_timeout: 25m
+          command_timeout: 20m
+          envs: VAULT_PASS
           script: |
-            chmod +x ~/adidas-runners/infrastructure/host/deploy.sh
-            ~/adidas-runners/infrastructure/host/deploy.sh --run
+            set -e
+            cd ~/AdidasRunnersVirtualAcitivityGetter
+            git pull --rebase --autostash
+            cd infrastructure/ansible
+            ansible-galaxy collection install community.docker ansible.posix >/dev/null 2>&1 || true
+            printf '%s' "$VAULT_PASS" > /tmp/adidas_vault_pass
+            trap 'rm -f /tmp/adidas_vault_pass' EXIT
+            ansible-playbook site.yml --vault-password-file /tmp/adidas_vault_pass
 
   send_email:
     runs-on: ubuntu-latest
