@@ -133,13 +133,15 @@ com os logs no pipeline). Build na VM = pipe rápida, sem emulação.
 O service roda `docker compose run --rm bot` (efêmero — sobe, roda, sai; sem Chrome
 residente). `Persistent=true` recupera disparos perdidos (VM desligada).
 
-## 9. Retry (Step Functions → simples)
+## 9. Retry (réplica fiel da Step Functions)
 
-O retry escalonado 30m/1h/1h30 **não** é replicado 1:1. Substituído por defesa em camadas:
-- App-level: `getJsonFromUrl` já tenta 3x + rotaciona proxy + reinicia driver.
-- Schedule-level: o próximo ciclo de 6h é o "retry final" — **idempotente** (dedup por `id`).
+Paridade total com a state machine da AWS:
+- `main.py` faz `sys.exit(1)` quando `hasError` → falha vira **código de saída** detectável.
+- `run-with-retries.sh` (chamado pelo systemd no run agendado) tenta de novo espaçando
+  **30m / 1h / 1h30**, até 4 tentativas (= `RunJob` + `TryAgain1/2/3` → `Failed`).
+- App-level: `getJsonFromUrl` ainda tenta 3x + rotaciona proxy + reinicia driver.
+- O run de validação (`--run`/`run_now`) é single-shot (feedback rápido, sem esperas).
 - Falha real → mensagem de erro no **Telegram admin** (lógica preservada).
-- Opcional: `OnFailure=` no systemd para um retry mais cedo.
 
 ## 10. Cutover & rollback
 

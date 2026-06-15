@@ -6,5 +6,7 @@ Requires=docker.service
 [Service]
 Type=oneshot
 WorkingDirectory={{ stack_dir }}
-ExecStart=/usr/bin/docker compose run --rm bot
-TimeoutStartSec=1200
+# Wrapper com retry escalonado 30m/1h/1h30 (igual à state machine da AWS).
+ExecStart=/bin/bash {{ stack_dir }}/run-with-retries.sh
+# Cobre as esperas (30m+1h+1h30 = 3h) + os runs, com folga.
+TimeoutStartSec=14400

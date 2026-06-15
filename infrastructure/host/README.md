@@ -68,8 +68,11 @@ docker compose build bot && docker compose run --rm bot
 ## Notas
 - **Isolamento:** nada compartilhado com a Florae além do hardware. Porta do Postgres
   só em `127.0.0.1:5433` (debug); o bot fala com o banco pela rede `adidas-net`.
-- **Retry:** o app tenta 3x internamente + rotaciona proxy; o próximo ciclo de 6h é o
-  retry final (idempotente, dedup por `id`). `Persistent=true` recupera disparos perdidos.
+- **Retry:** réplica fiel da state machine da AWS — o run agendado usa
+  `run-with-retries.sh`, que tenta de novo espaçando **30m / 1h / 1h30** (até 4 tentativas)
+  quando o bot sai com código != 0. Soma-se ao retry interno do app (3x por requisição +
+  rotação de proxy). O run de validação (`deploy.sh --run` / `ansible -e run_now=true`)
+  é single-shot (feedback rápido). `Persistent=true` recupera disparos perdidos.
 - **Proxy:** `PROXY_ENABLED=false` por padrão (selenium-wire frágil em ARM).
 - **Backup (opcional):** `docker exec adidas-db pg_dump -U adidas adidas_runners` num cron próprio.
 - **Rollback:** o `infrastructure/template.yaml` (AWS SAM antigo) segue no repo só como referência.

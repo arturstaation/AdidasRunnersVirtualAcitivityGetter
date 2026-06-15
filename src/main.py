@@ -4,6 +4,7 @@ import asyncio
 from typing import List
 import traceback
 import os
+import sys
 import signal
 import gc
 import psutil
@@ -98,4 +99,7 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    result = main()
+    # Sai com código != 0 quando houve erro, para que systemd/CI/wrapper de retry
+    # consigam DETECTAR a falha (a state machine da AWS lia o hasError do retorno).
+    sys.exit(1 if (result or {}).get("hasError") else 0)

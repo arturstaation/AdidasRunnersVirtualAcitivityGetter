@@ -7,5 +7,7 @@ Requires=docker.service
 Type=oneshot
 # __WORKDIR__ é substituído pelo deploy.sh pelo caminho real do infrastructure/host na VM.
 WorkingDirectory=__WORKDIR__
-ExecStart=/usr/bin/docker compose run --rm bot
-TimeoutStartSec=1200
+# Wrapper com retry escalonado 30m/1h/1h30 (igual à state machine da AWS).
+ExecStart=/bin/bash __WORKDIR__/run-with-retries.sh
+# Cobre as esperas (30m+1h+1h30 = 3h) + os runs, com folga.
+TimeoutStartSec=14400
