@@ -1,0 +1,10 @@
+[Unit]
+Description=Dispara o Adidas Runners a cada 6h
+
+[Timer]
+OnCalendar={{ schedule_oncalendar }}
+Persistent=true
+RandomizedDelaySec=120
+
+[Install]
+WantedBy=timers.target

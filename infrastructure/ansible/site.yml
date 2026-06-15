@@ -1,0 +1,14 @@
+---
+# Deploy do Adidas Runners — stack ISOLADO na VM (Postgres dedicado + bot + timer).
+# NÃO toca em nada da Florae (playbook/vault/inventário próprios).
+#
+#   ansible-playbook site.yml --ask-vault-pass                 # deploy
+#   ansible-playbook site.yml --ask-vault-pass -e run_now=true # deploy + roda 1x agora
+- name: Deploy Adidas Runners (stack isolado no host)
+  hosts: adidas
+  gather_facts: false
+  # group_vars/vault.yml não é auto-carregado (nome != grupo) — carrega explícito.
+  vars_files:
+    - group_vars/vault.yml
+  roles:
+    - adidas

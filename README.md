@@ -85,8 +85,13 @@ ADMIN_CHAT_ID=seu_admin_chat_id_aqui
 PROXY_ENABLED=se_voce_quer_usar_proxy
 PROXY_USER=seu_proxy_user_aqui
 PROXY_PASSWORD=seu_proxy_password_aqui
-GOOGLE_CREDENTIALS=sua_google_credentials_aqui
-GOOGLE_SHEET_ID=sua_google_sheet_id
+# Banco — use DATABASE_URL OU o conjunto PG_*:
+PG_HOST=localhost
+PG_PORT=5432
+PG_DB=adidas_runners
+PG_USER=adidas
+PG_PASSWORD=sua_senha_aqui
+# DATABASE_URL=postgresql://adidas:senha@localhost:5432/adidas_runners
 ```
 
 - TOKEN: Token do bot do Telegram (fornecido pelo BotFather).
@@ -94,8 +99,12 @@ GOOGLE_SHEET_ID=sua_google_sheet_id
 - ADMIN_CHAT_ID: ID do chat para mensagens administrativas (logs, alertas). Caso não seja fornecido, não enviara as mensagens voltadas para administradores.
 - PROXY_ENABLED: Bool referente ao desejo de usar proxy. Caso não seja fornecdio sera interpretado como False e não usará no processamento
 - PROXY_USER / PROXY_PASSWORD: Credenciais do Proxy DataImpulse.
-- GOOGLE_CREDENTIALS: Conteúdo do JSON de credenciais da conta de serviço do Google (veja abaixo como gerar) em base64.
-- GOOGLE_SHEET_ID: ID da planilha do Google Sheets.
+- PG_HOST / PG_PORT / PG_DB / PG_USER / PG_PASSWORD: Conexão com o Postgres onde as atividades são persistidas (substitui o Google Sheets). Alternativamente, defina `DATABASE_URL` no formato `postgresql://user:senha@host:porta/banco`.
+
+> Em produção o app roda na **mesma VM da Florae, mas em stack próprio e isolado**
+> (Docker Compose com Postgres dedicado + systemd timer; nada compartilhado com a
+> Florae além da máquina). Veja [`infrastructure/host/`](infrastructure/host/) e
+> [`PLANO-MIGRACAO-POSTGRES.md`](PLANO-MIGRACAO-POSTGRES.md).
 
 Dicas:
 - Use valores diferentes para CHAT_ID e ADMIN_CHAT_ID se quiser separar mensagens operacionais de notificações ao usuário.

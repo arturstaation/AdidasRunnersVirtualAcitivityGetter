@@ -1,0 +1,18 @@
+# Vars não-sensíveis do stack Adidas (isolado). Segredos ficam em vault.yml (cifrado).
+# O repo é clonado na VM; o build da imagem usa o Dockerfile/src da raiz do repo.
+
+# infrastructure/host = onde estão o docker-compose.yml, o .env (renderizado) e os units.
+adidas_stack_dir: "{{ playbook_dir }}/../host"
+
+# Banco (não-secret). A senha vem do vault (vault_pg_password).
+pg_user: "adidas"
+pg_db: "adidas_runners"
+
+# Proxy (selenium-wire é frágil em ARM — deixe false a menos que precise).
+proxy_enabled: "false"
+
+# Agendamento do systemd timer.
+schedule_oncalendar: "*-*-* 00,06,12,18:00:00"
+
+# -e run_now=true executa o bot uma vez ao fim do playbook (validação/cutover).
+run_now: false

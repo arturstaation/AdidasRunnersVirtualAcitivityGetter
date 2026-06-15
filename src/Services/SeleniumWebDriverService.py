@@ -12,8 +12,6 @@ from .UtilsService import UtilsService
 from .ProxyService import ProxyService
 import traceback
 import os
-from webdriver_manager.chrome import ChromeDriverManager
-from webdriver_manager.core.driver_cache import DriverCacheManager
 from tempfile import mkdtemp
 
 class SeleniumWebDriverService:
@@ -29,14 +27,16 @@ class SeleniumWebDriverService:
         self.logger.info("Inicializando SeleniumWebDriver")
         self.utilsService = utilsService
         self.hasProxy=self.utilsService.strToBool(os.getenv('PROXY_ENABLED', "False"))
-        self.logger.info("Instalando ChromeDriver")
-        cache_manager = DriverCacheManager(root_dir=mkdtemp())
-        self.driver_path = ChromeDriverManager(cache_manager=cache_manager).install()
+        # Em ARM (VM Oracle) não há Google Chrome/chromedriver oficial; usamos o
+        # chromium-driver do sistema via caminho fixo (arm64-native).
+        self.driver_path = os.getenv("CHROMEDRIVER_PATH", "/usr/bin/chromedriver")
+        self.logger.info(f"Usando ChromeDriver em {self.driver_path}")
         self.getDriver()
 
     def getDriver(self: Self):
         self.logger.info("Criando Selenium WebDriver")
         options = Options()
+        options.binary_location = os.getenv("CHROME_BIN", "/usr/bin/chromium")
         options.add_argument("--headless=new")
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-dev-shm-usage")

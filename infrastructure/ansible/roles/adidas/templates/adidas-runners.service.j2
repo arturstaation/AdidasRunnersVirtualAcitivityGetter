@@ -1,0 +1,10 @@
+[Unit]
+Description=Adidas Runners bot — uma execução (scraping + Telegram + Postgres)
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory={{ stack_dir }}
+ExecStart=/usr/bin/docker compose run --rm bot
+TimeoutStartSec=1200

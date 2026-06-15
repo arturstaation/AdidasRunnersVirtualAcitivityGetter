@@ -1,0 +1,10 @@
+[Unit]
+Description=Dispara o Adidas Runners a cada 6h (00:00, 06:00, 12:00, 18:00)
+
+[Timer]
+OnCalendar=*-*-* 00,06,12,18:00:00
+Persistent=true
+RandomizedDelaySec=120
+
+[Install]
+WantedBy=timers.target

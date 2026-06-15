@@ -1,4 +1,4 @@
-from Services import (AdidasService, TelegramService, LoggerService, SeleniumWebDriverService, UtilsService, GoogleSheetsService)
+from Services import (AdidasService, TelegramService, LoggerService, SeleniumWebDriverService, UtilsService, PostgresService)
 from dotenv import load_dotenv
 import asyncio
 from typing import List
@@ -10,7 +10,7 @@ import psutil
 
 def main():
    telegramService = None
-   googleSheetsService = None
+   postgresService = None
    seleniumWebDriverService = None
    adidasService = None
    loggerService = None
@@ -24,7 +24,7 @@ def main():
         utilsService = UtilsService(logger)
         utilsService.validateEnvVariables()
         telegramService = TelegramService(logger, utilsService)
-        googleSheetsService = GoogleSheetsService(logger)
+        postgresService = PostgresService(logger)
         seleniumWebDriverService = SeleniumWebDriverService(logger,utilsService)
         adidasService = AdidasService(logger, seleniumWebDriverService)
 
@@ -34,7 +34,7 @@ def main():
         for i, arCommunity in enumerate(arCommunityList):
             currentARCommunityEventsList = adidasService.getAdidasRunnersCommunityEvents(arCommunity)
             arCommunity.setEvents(currentARCommunityEventsList)
-            googleSheetsService.addNewActivities(arCommunity)
+            postgresService.addNewActivities(arCommunity)
             if len(arCommunity.events) > 0:
                 messagesToSend = telegramService.generateMessage(arCommunity, messagesToSend)
             arCommunity.setEvents([])
@@ -70,6 +70,8 @@ def main():
    finally:
         if(seleniumWebDriverService is not None):
             seleniumWebDriverService.stopDriver()
+        if(postgresService is not None):
+            postgresService.close()
         logger.info("Processamento Finalizado")
         try:
             try:
@@ -93,10 +95,7 @@ def main():
         except Exception:
             pass
 
-       
-       
-def lambda_handler(event, context):
-    return main()
+
 
 if __name__ == '__main__':
     main()

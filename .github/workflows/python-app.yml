@@ -5,16 +5,14 @@ on:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
-  workflow_dispatch:   
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python 3.11.3
@@ -42,140 +40,42 @@ jobs:
         echo "## Coverage Report" >> $GITHUB_STEP_SUMMARY
         echo "Line coverage: $coverage" >> $GITHUB_STEP_SUMMARY
 
-  deploy_aws:
-      runs-on: ubuntu-latest
-      needs: build
-      steps:
-        - uses: actions/checkout@v4
+  # Deploy ISOLADO na VM via SSH (secrets próprios do repo). O build arm64 acontece
+  # NA VM (nativo, sem QEMU) → pipe rápida. Não usa k3s/Argo/registry/runner da Florae.
+  # O .env (segredos) vive só na VM; o CI só envia o código e dispara o build+run.
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
 
-        - name: Configure AWS
-          uses: aws-actions/configure-aws-credentials@v2
-          with:
-            aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-            aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-            aws-region: sa-east-1
+      - name: Enviar código para a VM (sem segredos)
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VM_SSH_HOST }}
+          username: ${{ secrets.VM_SSH_USER }}
+          key: ${{ secrets.VM_SSH_KEY }}
+          port: ${{ secrets.VM_SSH_PORT || 22 }}
+          source: "Dockerfile,requirements.txt,src/,infrastructure/host/"
+          target: "~/adidas-runners"
+          overwrite: true
 
-        - name: Login ECR
-          id: ecr
-          uses: aws-actions/amazon-ecr-login@v1
-
-        - name: Set image tag
-          id: vars
-          run: |
-            echo "IMAGE_TAG=${GITHUB_SHA::8}" >> $GITHUB_OUTPUT
-
-        - name: Build & Push ECR
-          id: build_push
-          run: |
-            ECR_REGISTRY=${{ steps.ecr.outputs.registry }}
-            ECR_REPOSITORY=adidasrunners
-            IMAGE_TAG=${{ steps.vars.outputs.IMAGE_TAG }}
-            IMAGE_URI="${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}"
-
-            docker build . -t "$IMAGE_URI"
-            docker push "$IMAGE_URI"
-
-            echo "IMAGE_URI=$IMAGE_URI" >> $GITHUB_OUTPUT
-
-        - name: Calcular próximo horário fixo (00:00, 06:00, 12:00, 18:00) baseado em UTC-3 (Brasil)
-          id: schedule_time
-          run: |
-            
-            NOW_UTC=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-            NOW_UTC_TS=$(date -u +%s)
-
-            NOW_BRT_TS=$((NOW_UTC_TS - 10800))
-            TODAY_BRT=$(date -u -d "@$NOW_BRT_TS" +"%Y-%m-%d")
-
-            TIMES=("00:00" "06:00" "12:00" "18:00")
-
-            NEXT_TIME_BRT=""
-            for t in "${TIMES[@]}"; do
-              CANDIDATE_BRT="${TODAY_BRT}T${t}:00"
-              CANDIDATE_BRT_TS=$(date -u -d "$CANDIDATE_BRT" +%s)
-              
-              CANDIDATE_UTC_TS=$((CANDIDATE_BRT_TS + 10800))
-              
-              if [ "$CANDIDATE_UTC_TS" -gt $((NOW_UTC_TS + 600)) ]; then
-                NEXT_TIME_BRT="$CANDIDATE_BRT"
-                break
-              fi
-            done
-
-            if [ -z "$NEXT_TIME_BRT" ]; then
-              TOMORROW_BRT=$(date -u -d "$TODAY_BRT +1 day" +"%Y-%m-%d")
-              NEXT_TIME_BRT="${TOMORROW_BRT}T00:00:00"
-            fi
-
-            NEXT_TIME_BRT_TS=$(date -u -d "$NEXT_TIME_BRT" +%s)
-            NEXT_TIME_UTC_TS=$((NEXT_TIME_BRT_TS + 10800))  
-            NEXT_TIME_UTC=$(date -u -d "@$NEXT_TIME_UTC_TS" +"%Y-%m-%dT%H:%M:%S.000Z")
-
-            echo "Próximo horário agendado (BRT/UTC-3): $NEXT_TIME_BRT"
-            echo "Próximo horário convertido para UTC: $NEXT_TIME_UTC"
-            echo "start=$NEXT_TIME_UTC" >> $GITHUB_OUTPUT
-
-        - name: Garantir que stack não está em ROLLBACK_COMPLETE
-          run: |
-            set -e
-            STACK_NAME="adidasrunners-stack"
-            status=$(aws cloudformation describe-stacks \
-              --stack-name "$STACK_NAME" \
-              --query "Stacks[0].StackStatus" \
-              --output text 2>/dev/null || echo "NO_STACK")
-
-            echo "Status atual da stack: $status"
-
-            if [ "$status" = "ROLLBACK_COMPLETE" ]; then
-              echo "Stack em ROLLBACK_COMPLETE, deletando..."
-              aws cloudformation delete-stack --stack-name "$STACK_NAME"
-              aws cloudformation wait stack-delete-complete --stack-name "$STACK_NAME"
-              echo "Stack deletada. 🚀"
-            fi
-
-        - name: Deploy CloudFormation stack
-          env:
-            IMAGE_URI: ${{ steps.build_push.outputs.IMAGE_URI }}
-          run: |
-            aws cloudformation deploy \
-              --template-file infrastructure/template.yaml \
-              --stack-name adidasrunners-stack \
-              --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
-              --no-fail-on-empty-changeset \
-              --parameter-overrides \
-                ImageUri="$IMAGE_URI" \
-                LambdaName="adidasrunnersbot" \
-                StateMachineName="AdidasRunnersStateMachine" \
-                EventRuleName="AdidasRunnersSchedule" \
-                EventScheduleExpression="rate(6 hours)" \
-                ScheduleStart="${{ steps.schedule_time.outputs.start }}" \
-                MemorySize="1024" \
-                EphemeralStorageSize="512" \
-                Timeout="900" \
-                SnapStart="None" \
-                AdminChatId="${{ secrets.ADMIN_CHAT_ID }}" \
-                ChatId="${{ secrets.CHAT_ID }}" \
-                GoogleCredentials="${{ secrets.GOOGLE_CREDENTIALS }}" \
-                GoogleSheetId="${{ secrets.GOOGLE_SHEET_ID }}" \
-                ProxyLink="${{ secrets.PROXY_LINK }}" \
-                ProxyPort="${{ secrets.PROXY_PORT }}" \
-                ProxyEnabled="${{ secrets.PROXY_ENABLED }}" \
-                ProxyPassword="${{ secrets.PROXY_PASSWORD }}" \
-                ProxyUser="${{ secrets.PROXY_USER }}" \
-                Token="${{ secrets.TOKEN }}" \
-                Agent="${{ secrets.AGENT }}" || {
-              echo "Deploy falhou. Buscando eventos da stack..."
-              aws cloudformation describe-stack-events \
-                --stack-name adidasrunners-stack \
-                --max-items 20 \
-                --query 'StackEvents[?ResourceStatus==`CREATE_FAILED` || ResourceStatus==`UPDATE_FAILED`].[Timestamp,ResourceType,LogicalResourceId,ResourceStatus,ResourceStatusReason]' \
-                --output table
-              exit 1
-            }
+      - name: Build + deploy + run na VM
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VM_SSH_HOST }}
+          username: ${{ secrets.VM_SSH_USER }}
+          key: ${{ secrets.VM_SSH_KEY }}
+          port: ${{ secrets.VM_SSH_PORT || 22 }}
+          command_timeout: 25m
+          script: |
+            chmod +x ~/adidas-runners/infrastructure/host/deploy.sh
+            ~/adidas-runners/infrastructure/host/deploy.sh --run
 
   send_email:
     runs-on: ubuntu-latest
-    needs: [build, deploy_aws]
+    needs: [build, deploy]
     if: always()
     steps:
       - name: Compose subject
@@ -183,10 +83,10 @@ jobs:
         run: |
           OVERALL="success"
           if [ "${{ needs.build.result }}" != "success" ] || \
-            [ "${{ needs.deploy_aws.result }}" != "success" ]; then
+            [ "${{ needs.deploy.result }}" != "success" ]; then
             OVERALL="failure"
           fi
-          echo "subject=CI/CD - adidasrunnersbot: ${OVERALL} (run #${{ github.run_number }})" >> $GITHUB_OUTPUT
+          echo "subject=CI/CD - adidas-runners: ${OVERALL} (run #${{ github.run_number }})" >> $GITHUB_OUTPUT
 
       - name: Send Email
         uses: dawidd6/action-send-mail@v3
@@ -204,8 +104,8 @@ jobs:
             Workflow: ${{ github.workflow }}
 
             Status por job:
-            - build: ${{ needs.build.result }}
-            - deploy_aws: ${{ needs.deploy_aws.result }}
+            - build:  ${{ needs.build.result }}
+            - deploy: ${{ needs.deploy.result }}
 
             Branch: ${{ github.ref_name }}
             Commit: ${{ github.sha }}

@@ -1,0 +1,64 @@
+---
+# Stack isolado do Adidas Runners no host. Tudo idempotente.
+
+- name: Resolver caminho absoluto do stack
+  ansible.builtin.set_fact:
+    stack_dir: "{{ adidas_stack_dir | realpath }}"
+
+- name: Renderizar .env (segredos do vault) no stack
+  ansible.builtin.template:
+    src: env.j2
+    dest: "{{ stack_dir }}/.env"
+    mode: "0600"
+  no_log: true
+
+- name: Build do bot (arm64 nativo)
+  ansible.builtin.command:
+    cmd: docker compose build bot
+    chdir: "{{ stack_dir }}"
+  register: build_out
+  changed_when: "'Building' in build_out.stderr or 'naming to' in build_out.stderr or build_out.rc == 0"
+
+- name: Subir o Postgres dedicado (adidas-db)
+  ansible.builtin.command:
+    cmd: docker compose up -d db
+    chdir: "{{ stack_dir }}"
+  register: up_out
+  changed_when: "'Started' in up_out.stderr or 'Created' in up_out.stderr"
+
+- name: Esperar o Postgres aceitar conexões
+  ansible.builtin.command: docker exec adidas-db pg_isready -U {{ pg_user }} -d {{ pg_db }}
+  register: pgready
+  until: pgready.rc == 0
+  retries: 30
+  delay: 3
+  changed_when: false
+
+- name: Instalar unit do systemd (service)
+  ansible.builtin.template:
+    src: adidas-runners.service.j2
+    dest: /etc/systemd/system/adidas-runners.service
+    mode: "0644"
+  become: true
+
+- name: Instalar timer do systemd
+  ansible.builtin.template:
+    src: adidas-runners.timer.j2
+    dest: /etc/systemd/system/adidas-runners.timer
+    mode: "0644"
+  become: true
+
+- name: Ativar o timer (daemon-reload + enable + start)
+  ansible.builtin.systemd:
+    name: adidas-runners.timer
+    state: started
+    enabled: true
+    daemon_reload: true
+  become: true
+
+- name: Execução imediata (opcional, -e run_now=true)
+  ansible.builtin.command:
+    cmd: docker compose run --rm bot
+    chdir: "{{ stack_dir }}"
+  when: run_now | bool
+  changed_when: true

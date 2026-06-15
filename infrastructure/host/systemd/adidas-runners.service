@@ -1,0 +1,11 @@
+[Unit]
+Description=Adidas Runners bot — uma execução (scraping + Telegram + Postgres)
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+# __WORKDIR__ é substituído pelo deploy.sh pelo caminho real do infrastructure/host na VM.
+WorkingDirectory=__WORKDIR__
+ExecStart=/usr/bin/docker compose run --rm bot
+TimeoutStartSec=1200

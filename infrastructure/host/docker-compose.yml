@@ -1,0 +1,50 @@
+# Adidas Runners — stack ISOLADO no host (mesma VM da Florae, infra própria).
+# Nada aqui toca k3s/Argo/vault/florae-db. Rede, volume e Postgres são dedicados.
+#
+#   docker compose up -d db          # sobe só o Postgres (sempre de pé)
+#   docker compose build bot         # build arm64 nativo na VM
+#   docker compose run --rm bot      # 1 execução do bot (o systemd timer faz isso a cada 6h)
+name: adidas-runners
+
+services:
+  db:
+    image: postgres:17
+    container_name: adidas-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${PG_USER}
+      POSTGRES_PASSWORD: ${PG_PASSWORD}
+      POSTGRES_DB: ${PG_DB}
+    ports:
+      - "127.0.0.1:5433:5432"   # SÓ localhost (debug/psql na VM); o bot usa a rede interna
+    volumes:
+      - adidas_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PG_USER} -d ${PG_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks: [adidas-net]
+
+  bot:
+    build:
+      context: ../..          # raiz do repo (Dockerfile + src/)
+      dockerfile: Dockerfile
+    image: adidas-runners:local
+    profiles: ["bot"]          # fora do `up`; só roda via `run` (timer) ou `--profile bot`
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PG_HOST: adidas-db        # nome do container na rede adidas-net
+      PG_PORT: "5432"           # porta interna do Postgres
+    env_file:
+      - .env                    # TOKEN, CHAT_ID, ADMIN_CHAT_ID, PG_USER/PG_DB/PG_PASSWORD, PROXY_*
+    networks: [adidas-net]
+
+networks:
+  adidas-net:
+    name: adidas-net
+
+volumes:
+  adidas_pg_data:

@@ -62,8 +62,11 @@ def logger():
 @pytest.fixture(autouse=True)
 def clean_env(monkeypatch):
     keys = [
-        "GOOGLE_CREDENTIALS",
-        "GOOGLE_SHEET_ID",
+        "DATABASE_URL",
+        "PG_HOST",
+        "PG_DB",
+        "PG_USER",
+        "PG_PASSWORD",
         "TOKEN",
         "CHAT_ID",
         "ADMIN_CHAT_ID",
@@ -122,8 +125,10 @@ def test_strToBool_cases(logger, s, expected):
 
 
 def test_validateEnvVariables_all_required_present_proxy_disabled_warns_proxy(logger, monkeypatch, caplog):
-    monkeypatch.setenv("GOOGLE_CREDENTIALS", "x")
-    monkeypatch.setenv("GOOGLE_SHEET_ID", "y")
+    monkeypatch.setenv("PG_HOST", "adidas-db")
+    monkeypatch.setenv("PG_DB", "adidas_runners")
+    monkeypatch.setenv("PG_USER", "adidas")
+    monkeypatch.setenv("PG_PASSWORD", "secret")
     monkeypatch.setenv("TOKEN", "t")
     monkeypatch.setenv("CHAT_ID", "c")
     monkeypatch.setenv("PROXY_ENABLED", "false")
@@ -143,13 +148,15 @@ def test_validateEnvVariables_missing_required_vars_raises(logger, caplog):
         us.validateEnvVariables()
     msg = str(exc.value)
     assert "As seguintes variáveis de ambiente não estão configuradas:" in msg
-    for var in ["CHAT_ID", "GOOGLE_CREDENTIALS", "GOOGLE_SHEET_ID", "TOKEN"]:
+    for var in ["CHAT_ID", "PG_HOST", "PG_DB", "PG_USER", "PG_PASSWORD", "TOKEN"]:
         assert var in msg
 
 def test_validateEnvVariables_admin_chat_id_blank_warns(logger, monkeypatch, caplog):
 
-    monkeypatch.setenv("GOOGLE_CREDENTIALS", "gc")
-    monkeypatch.setenv("GOOGLE_SHEET_ID", "gs")
+    monkeypatch.setenv("PG_HOST", "adidas-db")
+    monkeypatch.setenv("PG_DB", "adidas_runners")
+    monkeypatch.setenv("PG_USER", "adidas")
+    monkeypatch.setenv("PG_PASSWORD", "secret")
     monkeypatch.setenv("TOKEN", "tk")
     monkeypatch.setenv("CHAT_ID", "cid")
 
@@ -168,8 +175,10 @@ def test_validateEnvVariables_admin_chat_id_blank_warns(logger, monkeypatch, cap
 @pytest.mark.parametrize("flag", ["1", "true", "TRUE", "Yes", "on", " y "])
 def test_validateEnvVariables_proxy_enabled_requires_user_and_password_missing_raises(logger, monkeypatch, flag):
 
-    monkeypatch.setenv("GOOGLE_CREDENTIALS", "gc")
-    monkeypatch.setenv("GOOGLE_SHEET_ID", "gs")
+    monkeypatch.setenv("PG_HOST", "adidas-db")
+    monkeypatch.setenv("PG_DB", "adidas_runners")
+    monkeypatch.setenv("PG_USER", "adidas")
+    monkeypatch.setenv("PG_PASSWORD", "secret")
     monkeypatch.setenv("TOKEN", "tk")
     monkeypatch.setenv("CHAT_ID", "cid")
 
@@ -185,8 +194,10 @@ def test_validateEnvVariables_proxy_enabled_requires_user_and_password_missing_r
     assert "PROXY_USER" in msg and "PROXY_PASSWORD" in msg
 
 def test_validateEnvVariables_proxy_enabled_with_user_but_no_password_raises(logger, monkeypatch):
-    monkeypatch.setenv("GOOGLE_CREDENTIALS", "gc")
-    monkeypatch.setenv("GOOGLE_SHEET_ID", "gs")
+    monkeypatch.setenv("PG_HOST", "adidas-db")
+    monkeypatch.setenv("PG_DB", "adidas_runners")
+    monkeypatch.setenv("PG_USER", "adidas")
+    monkeypatch.setenv("PG_PASSWORD", "secret")
     monkeypatch.setenv("TOKEN", "tk")
     monkeypatch.setenv("CHAT_ID", "cid")
     monkeypatch.setenv("ADMIN_CHAT_ID", "admin")
@@ -202,8 +213,10 @@ def test_validateEnvVariables_proxy_enabled_with_user_but_no_password_raises(log
     assert "PROXY_PASSWORD" in msg
 
 def test_validateEnvVariables_proxy_enabled_with_password_but_no_user_raises(logger, monkeypatch):
-    monkeypatch.setenv("GOOGLE_CREDENTIALS", "gc")
-    monkeypatch.setenv("GOOGLE_SHEET_ID", "gs")
+    monkeypatch.setenv("PG_HOST", "adidas-db")
+    monkeypatch.setenv("PG_DB", "adidas_runners")
+    monkeypatch.setenv("PG_USER", "adidas")
+    monkeypatch.setenv("PG_PASSWORD", "secret")
     monkeypatch.setenv("TOKEN", "tk")
     monkeypatch.setenv("CHAT_ID", "cid")
     monkeypatch.setenv("ADMIN_CHAT_ID", "admin")
@@ -219,8 +232,10 @@ def test_validateEnvVariables_proxy_enabled_with_password_but_no_user_raises(log
     assert "PROXY_USER" in msg
 
 def test_validateEnvVariables_proxy_enabled_with_both_ok_passes(logger, monkeypatch):
-    monkeypatch.setenv("GOOGLE_CREDENTIALS", "gc")
-    monkeypatch.setenv("GOOGLE_SHEET_ID", "gs")
+    monkeypatch.setenv("PG_HOST", "adidas-db")
+    monkeypatch.setenv("PG_DB", "adidas_runners")
+    monkeypatch.setenv("PG_USER", "adidas")
+    monkeypatch.setenv("PG_PASSWORD", "secret")
     monkeypatch.setenv("TOKEN", "tk")
     monkeypatch.setenv("CHAT_ID", "cid")
     monkeypatch.setenv("ADMIN_CHAT_ID", "admin")

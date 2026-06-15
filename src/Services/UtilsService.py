@@ -21,13 +21,12 @@ class UtilsService:
         missing: List[str] = []
 
         requiredVars: Iterable[str] = (
-            "GOOGLE_CREDENTIALS",
-            "GOOGLE_SHEET_ID",
             "TOKEN",
             "CHAT_ID",
         )
 
         env: Dict[str, Optional[str]] = {k: os.getenv(k) for k in set(requiredVars) | {
+            "DATABASE_URL", "PG_HOST", "PG_DB", "PG_USER", "PG_PASSWORD",
             "ADMIN_CHAT_ID", "AGENT", "PROXY_USER", "PROXY_PASSWORD", "PROXY_LINK", "PROXY_PORT"
         }}
 
@@ -35,6 +34,13 @@ class UtilsService:
             val = env.get(var)
             if val is None or str(val).strip() == "":
                 missing.append(var)
+
+        # Banco: aceita DATABASE_URL OU o conjunto PG_HOST/PG_DB/PG_USER/PG_PASSWORD.
+        hasDatabaseUrl = bool(env.get("DATABASE_URL") and str(env.get("DATABASE_URL")).strip())
+        if not hasDatabaseUrl:
+            for var in ("PG_HOST", "PG_DB", "PG_USER", "PG_PASSWORD"):
+                if not env.get(var) or str(env.get(var)).strip() == "":
+                    missing.append(var)
 
         adminChatId = env.get("ADMIN_CHAT_ID")
         if not adminChatId or str(adminChatId).strip() == "":

@@ -1,0 +1,13 @@
+# MODELO do cofre de segredos do Adidas (separado do vault da Florae).
+#
+#   1. cp group_vars/vault.example.yml group_vars/vault.yml
+#   2. preencha os valores reais
+#   3. ansible-vault encrypt group_vars/vault.yml
+#
+# Gere senha aleatória com:
+#   openssl rand -base64 36 | tr '+/' '-_' | tr -d '='
+
+vault_pg_password: "__GERAR__"           # senha do Postgres dedicado (adidas-db)
+vault_telegram_token: "__BOT_TOKEN__"    # BotFather
+vault_chat_id: "__CHAT_ID__"             # chat de destino
+vault_admin_chat_id: "__ADMIN_CHAT_ID__" # chat de alertas/admin
