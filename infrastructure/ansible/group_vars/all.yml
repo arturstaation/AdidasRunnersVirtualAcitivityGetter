@@ -11,9 +11,11 @@ pg_db: "adidas_runners"
 # User-agent custom do scraping (opcional; vazio = usa o default do app).
 agent: ""
 
-# Proxy IPRoyal (selenium-wire). Host/porta aqui (não-secret);
-# usuário/senha ficam no vault (vault_proxy_user / vault_proxy_password).
-proxy_enabled: "true"
+# Proxy IPRoyal (selenium-wire) — DESABILITADO. A VM acessa a Adidas direto com
+# Chromium real (o smoke provou 200/sem proxy). Mantido pronto: pra reativar, ponha
+# proxy_enabled "true" + as creds no vault. (Ao reativar, talvez precise pinar
+# pyOpenSSL — o selenium-wire quebra em versões novas.)
+proxy_enabled: "false"
 proxy_link: "geo.iproyal.com"
 proxy_port: "12321"
 

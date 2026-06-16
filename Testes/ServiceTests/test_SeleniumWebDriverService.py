@@ -32,9 +32,12 @@ def _patch_driver_stack(win_or_linux="win"):
     service_mock = MagicMock()
     service_mock_cls.return_value = service_mock
 
-    chrome_mock_cls = MagicMock()
+    chrome_mock_cls = MagicMock()          # selenium puro (sem proxy)
     driver_mock = MagicMock()
     chrome_mock_cls.return_value = driver_mock
+
+    wire_chrome_mock_cls = MagicMock()     # selenium-wire (com proxy)
+    wire_chrome_mock_cls.return_value = driver_mock
 
     proxy_service_cls = MagicMock()
     proxy_service_inst = MagicMock()
@@ -48,6 +51,7 @@ def _patch_driver_stack(win_or_linux="win"):
         patch("Services.SeleniumWebDriverService.Options", options_mock_cls),
         patch("Services.SeleniumWebDriverService.Service", service_mock_cls),
         patch("Services.SeleniumWebDriverService.webdriver.Chrome", chrome_mock_cls),
+        patch("Services.SeleniumWebDriverService.wire_webdriver.Chrome", wire_chrome_mock_cls),
         patch("Services.SeleniumWebDriverService.ProxyService", proxy_service_cls),
         patch("Services.SeleniumWebDriverService.TimeoutException", FakeTimeoutException),
     ]
@@ -58,6 +62,7 @@ def _patch_driver_stack(win_or_linux="win"):
         service_cls=service_mock_cls,
         service=service_mock,
         chrome_cls=chrome_mock_cls,
+        wire_chrome_cls=wire_chrome_mock_cls,
         driver=driver_mock,
         proxy_cls=proxy_service_cls,
         proxy=proxy_service_inst,
@@ -68,7 +73,7 @@ def _patch_driver_stack(win_or_linux="win"):
 
 def test_getJsonFromUrl_success_first_try(logger):
     patchers, m = _patch_driver_stack()
-    with patchers[0], patchers[1], patchers[2], patchers[3], patchers[4]:
+    with patchers[0], patchers[1], patchers[2], patchers[3], patchers[4], patchers[5]:
         svc = SeleniumWebDriverService(logger=logger, utilsService=MagicMock())
 
         pre = MagicMock()
@@ -84,7 +89,7 @@ def test_getJsonFromUrl_success_first_try(logger):
 
 def test_getJsonFromUrl_403_then_success(logger):
     patchers, m = _patch_driver_stack()
-    with patchers[0], patchers[1], patchers[2], patchers[3], patchers[4]:
+    with patchers[0], patchers[1], patchers[2], patchers[3], patchers[4], patchers[5]:
         svc = SeleniumWebDriverService(logger=logger, utilsService=MagicMock())
 
         m.driver.find_element.side_effect = [
@@ -101,7 +106,7 @@ def test_getJsonFromUrl_403_then_success(logger):
 
 def test_getJsonFromUrl_all_403_raises(logger):
     patchers, m = _patch_driver_stack()
-    with patchers[0], patchers[1], patchers[2], patchers[3], patchers[4]:
+    with patchers[0], patchers[1], patchers[2], patchers[3], patchers[4], patchers[5]:
         svc = SeleniumWebDriverService(logger=logger, utilsService=MagicMock())
 
         m.driver.find_element.side_effect = m.TimeoutException("again")
@@ -115,7 +120,7 @@ def test_getJsonFromUrl_all_403_raises(logger):
 
 def test_getJsonFromUrl_unexpected_error_then_success(logger):
     patchers, m = _patch_driver_stack()
-    with patchers[0], patchers[1], patchers[2], patchers[3], patchers[4]:
+    with patchers[0], patchers[1], patchers[2], patchers[3], patchers[4], patchers[5]:
         svc = SeleniumWebDriverService(logger=logger, utilsService=MagicMock())
 
         m.driver.get.side_effect = [Exception("network hiccup"), None]
@@ -149,7 +154,7 @@ def test_restartDriver_calls_stop_and_getDriver_even_if_stop_raises(logger):
 
 def test_getJsonFromUrl_page_load_timeout_then_success(logger):
     patchers, m = _patch_driver_stack()
-    with patchers[0], patchers[1], patchers[2], patchers[3], patchers[4]:
+    with patchers[0], patchers[1], patchers[2], patchers[3], patchers[4], patchers[5]:
         svc = SeleniumWebDriverService(logger=logger, utilsService=MagicMock())
 
         m.driver.get.side_effect = [m.TimeoutException("timeout on load"), None]
@@ -167,7 +172,7 @@ def test_getJsonFromUrl_page_load_timeout_then_success(logger):
 
 def test_getJsonFromUrl_unknown_error_on_pre_then_success(logger):
     patchers, m = _patch_driver_stack()
-    with patchers[0], patchers[1], patchers[2], patchers[3], patchers[4]:
+    with patchers[0], patchers[1], patchers[2], patchers[3], patchers[4], patchers[5]:
         svc = SeleniumWebDriverService(logger=logger, utilsService=MagicMock())
 
         m.driver.get.side_effect = [None, None]
@@ -192,14 +197,15 @@ def test_getDriver_with_proxy_builds_seleniumwire_options_and_calls_proxy(logger
     utils_mock = MagicMock()
     utils_mock.strToBool.return_value = True
 
-    with patchers[0], patchers[1], patchers[2], patchers[3], patchers[4]:
+    with patchers[0], patchers[1], patchers[2], patchers[3], patchers[4], patchers[5]:
         svc = SeleniumWebDriverService(logger=logger, utilsService=utils_mock)
 
         m.proxy_cls.assert_called_once_with(logger)
         m.proxy.getNewProxy.assert_called_once()
         m.proxy.getProxySettings.assert_called_once()
 
-        _, kwargs = m.chrome_cls.call_args
+        # Modo proxy usa o webdriver do selenium-wire (wire_webdriver), não o puro.
+        _, kwargs = m.wire_chrome_cls.call_args
         assert "seleniumwire_options" in kwargs
         sw_opts = kwargs["seleniumwire_options"]
         assert "proxy" in sw_opts
@@ -207,4 +213,21 @@ def test_getDriver_with_proxy_builds_seleniumwire_options_and_calls_proxy(logger
         assert sw_opts["proxy"]["http"] == expected_url
         assert sw_opts["proxy"]["https"] == expected_url
 
+        assert svc.driver is m.driver
+
+
+def test_getDriver_without_proxy_uses_plain_selenium(logger):
+    patchers, m = _patch_driver_stack()
+    utils_mock = MagicMock()
+    utils_mock.strToBool.return_value = False   # proxy desabilitado
+
+    with patchers[0], patchers[1], patchers[2], patchers[3], patchers[4], patchers[5]:
+        svc = SeleniumWebDriverService(logger=logger, utilsService=utils_mock)
+
+        # Sem proxy: usa selenium puro, SEM seleniumwire_options e SEM ProxyService.
+        m.chrome_cls.assert_called_once()
+        _, kwargs = m.chrome_cls.call_args
+        assert "seleniumwire_options" not in kwargs
+        m.proxy_cls.assert_not_called()
+        m.wire_chrome_cls.assert_not_called()
         assert svc.driver is m.driver

@@ -1,5 +1,6 @@
 from logging import Logger
-from seleniumwire import webdriver
+from selenium import webdriver
+from seleniumwire import webdriver as wire_webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 import json
@@ -49,8 +50,12 @@ class SeleniumWebDriverService:
         options.add_argument(f"--disk-cache-dir={mkdtemp()}")
         options.add_argument(f'--user-agent={os.getenv("AGENT", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36")}')
 
-        seleniumwireOptions = {}
+        service = Service(self.driver_path)
         if(self.hasProxy):
+            # Modo proxy: selenium-wire (MITM) + ProxyService. Mantido pronto, porém
+            # hoje DESABILITADO (PROXY_ENABLED=false) — a VM acessa a Adidas direto
+            # com Chromium real. Ao REATIVAR, pode ser preciso pinar o pyOpenSSL: o
+            # selenium-wire quebra em versões novas (X509.get_extension removido).
             proxyService = ProxyService(self.logger)
             proxyService.getNewProxy()
 
@@ -65,8 +70,10 @@ class SeleniumWebDriverService:
                     "https": proxyUrl
                 }
             }
-        service = Service(self.driver_path)
-        self.driver = webdriver.Chrome(service=service ,options=options, seleniumwire_options=seleniumwireOptions)
+            self.driver = wire_webdriver.Chrome(service=service, options=options, seleniumwire_options=seleniumwireOptions)
+        else:
+            # Modo padrão (sem proxy): selenium puro, sem o MITM do selenium-wire.
+            self.driver = webdriver.Chrome(service=service, options=options)
 
     def restartDriver(self: Self):
         self.logger.warning("Reiniciando WebDriver")
